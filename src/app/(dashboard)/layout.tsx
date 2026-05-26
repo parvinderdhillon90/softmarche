@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { CalendarDays, BarChart2, Settings } from "lucide-react";
+import { CalendarDays, BarChart2, Settings, Activity } from "lucide-react";
 
 const nav = [
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/analytics", label: "Analytics", icon: BarChart2 },
-  { href: "/accounts", label: "Accounts", icon: Settings },
+  { href: "/monitor",   label: "Post Monitor", icon: Activity },
+  { href: "/calendar",  label: "Calendar",     icon: CalendarDays },
+  { href: "/analytics", label: "Analytics",    icon: BarChart2 },
+  { href: "/accounts",  label: "Accounts",     icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -177,4 +177,63 @@ export async function getUserPages(userToken: string) {
   }>;
 }
 
+// ── Instagram monitoring ──────────────────────────────────────────────────────
+
+export interface IgMediaItem {
+  id: string;
+  timestamp: string;       // ISO 8601
+  media_type: string;
+  permalink: string;
+  caption?: string;
+  thumbnail_url?: string;
+  media_url?: string;
+}
+
+export async function getInstagramMediaForMonth(
+  igUserId: string,
+  token: string,
+  year: number,
+  month: number // 1-based
+): Promise<IgMediaItem[]> {
+  const since = new Date(year, month - 1, 1);
+  const until = new Date(year, month, 1);
+
+  const client = api(token);
+  const items: IgMediaItem[] = [];
+  let url = `/${igUserId}/media`;
+  let params: Record<string, string | number> = {
+    fields: "id,timestamp,media_type,permalink,caption,thumbnail_url,media_url",
+    since: Math.floor(since.getTime() / 1000),
+    until: Math.floor(until.getTime() / 1000),
+    limit: 50,
+  };
+
+  // Paginate through all results
+  while (url) {
+    const { data } = await client.get(url, { params });
+    items.push(...(data.data as IgMediaItem[]));
+    url = data.paging?.next ? "" : ""; // stop after first page for month view
+    params = {};
+    break;
+  }
+
+  return items.filter((item) => {
+    const d = new Date(item.timestamp);
+    return d >= since && d < until;
+  });
+}
+
+export async function getInstagramAccountInfo(igUserId: string, token: string) {
+  const { data } = await api(token).get(`/${igUserId}`, {
+    params: { fields: "id,username,profile_picture_url,followers_count,media_count" },
+  });
+  return data as {
+    id: string;
+    username: string;
+    profile_picture_url?: string;
+    followers_count: number;
+    media_count: number;
+  };
+}
+
 type MetricMap = Record<string, number>;
