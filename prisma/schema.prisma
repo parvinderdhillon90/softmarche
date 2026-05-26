@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id             String    @id @default(cuid())
+  platform       Platform
+  pageId         String
+  pageName       String
+  accessToken    String
+  tokenExpiresAt DateTime?
+  instagramId    String?
+  createdAt      DateTime  @default(now())
+  posts          Post[]
+
+  @@unique([platform, pageId])
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  accountId   String
+  account     Account    @relation(fields: [accountId], references: [id])
+  platform    Platform
+  status      PostStatus @default(DRAFT)
+  caption     String
+  mediaUrls   String[]
+  mediaType   MediaType  @default(IMAGE)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  externalId  String?
+  errorMsg    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  analytics   Analytics?
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  postId      String   @unique
+  post        Post     @relation(fields: [postId], references: [id])
+  impressions Int      @default(0)
+  reach       Int      @default(0)
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  saves       Int      @default(0)
+  clicks      Int      @default(0)
+  fetchedAt   DateTime @default(now())
+}
+
+enum Platform {
+  FACEBOOK
+  INSTAGRAM
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  REEL
+}
