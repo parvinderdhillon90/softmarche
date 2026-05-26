@@ -1,0 +1,86 @@
+import { prisma } from "./prisma";
+import { getInstagramMediaForMonth, getInstagramAccountInfo } from "./meta";
+
+export async function syncAllAccounts() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  const accounts = await prisma.account.findMany({
+    where: { instagramId: { not: null } },
+    select: { id: true, instagramId: true, accessToken: true },
+  });
+
+  const BATCH = 5;
+  for (let i = 0; i < accounts.length; i += BATCH) {
+    const batch = accounts.slice(i, i + BATCH);
+    await Promise.allSettled(batch.map((a) => syncOneAccount(a, year, month)));
+    if (i + BATCH < accounts.length) {
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+}
+
+async function syncOneAccount(
+  account: { id: string; instagramId: string | null; accessToken: string },
+  year: number,
+  month: number
+) {
+  try {
+    const [media, info, scheduledCount] = await Promise.all([
+      getInstagramMediaForMonth(account.instagramId!, account.accessToken, year, month),
+      getInstagramAccountInfo(account.instagramId!, account.accessToken),
+      prisma.post.count({
+        where: {
+          accountId: account.id,
+          platform: "INSTAGRAM",
+          status: { in: ["SCHEDULED", "DRAFT"] },
+          scheduledAt: {
+            gte: new Date(year, month - 1, 1),
+            lt: new Date(year, month, 1),
+          },
+        },
+      }),
+    ]);
+
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const daysElapsed = today.getDate();
+    const postedDates = new Set(media.map((m) => m.timestamp.slice(0, 10)));
+
+    let missedDays = 0;
+    for (let d = 1; d < daysElapsed; d++) {
+      const ds = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      if (!postedDates.has(ds)) missedDays++;
+    }
+
+    const todayPosted = media.filter((m) => m.timestamp.slice(0, 10) === todayStr).length;
+
+    await prisma.account.update({
+      where: { id: account.id },
+      data: {
+        cachedMonthTotal: media.length,
+        cachedMissedDays: missedDays,
+        cachedTodayPosted: todayPosted,
+        cachedScheduled: scheduledCount,
+        cachedSyncMonth: month,
+        cachedSyncYear: year,
+        username: info.username,
+        followers: info.followers_count,
+        lastSyncAt: new Date(),
+      },
+    });
+
+    await prisma.accountSyncLog.create({
+      data: { accountId: account.id, success: true },
+    });
+  } catch (err) {
+    await prisma.accountSyncLog.create({
+      data: {
+        accountId: account.id,
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    });
+  }
+}

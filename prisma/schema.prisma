@@ -15,9 +15,34 @@ model Account {
   tokenExpiresAt DateTime?
   instagramId    String?
   createdAt      DateTime  @default(now())
-  posts          Post[]
+
+  // Per-property posting target
+  monthlyPostTarget Int @default(20)
+
+  // Cached overview stats — refreshed hourly by cron
+  lastSyncAt       DateTime?
+  cachedMonthTotal Int       @default(0)
+  cachedMissedDays Int       @default(0)
+  cachedTodayPosted Int      @default(0)
+  cachedScheduled  Int       @default(0)
+  cachedSyncMonth  Int?
+  cachedSyncYear   Int?
+  username         String?
+  followers        Int       @default(0)
+
+  posts    Post[]
+  syncLogs AccountSyncLog[]
 
   @@unique([platform, pageId])
+}
+
+model AccountSyncLog {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id])
+  syncedAt  DateTime @default(now())
+  success   Boolean
+  error     String?
 }
 
 model Post {

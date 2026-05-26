@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Calendar, AlertCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Calendar, AlertCircle, ArrowLeft } from "lucide-react";
 import { format, addMonths, subMonths } from "date-fns";
+import Link from "next/link";
 import { Account } from "@/types";
 
 interface DayData {
@@ -32,8 +34,11 @@ const STATUS_STYLE: Record<DayData["status"], { bg: string; border: string; dot:
 };
 
 export default function MonitorPage() {
+  const searchParams = useSearchParams();
+  const preselectedId = searchParams.get("accountId") ?? "";
+
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string>(preselectedId);
   const [month, setMonth] = useState(new Date());
   const [data, setData] = useState<MonitorData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,9 +51,10 @@ export default function MonitorPage() {
       .then((list: Account[]) => {
         const igAccounts = list.filter((a) => a.instagramId);
         setAccounts(igAccounts);
-        if (igAccounts.length > 0) setSelectedId(igAccounts[0].id);
+        // Only auto-select first account if no accountId was given in the URL
+        if (!preselectedId && igAccounts.length > 0) setSelectedId(igAccounts[0].id);
       });
-  }, []);
+  }, [preselectedId]);
 
   const load = useCallback(async () => {
     if (!selectedId) return;
@@ -73,6 +79,13 @@ export default function MonitorPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
+      {/* Back link when drilled from properties */}
+      {preselectedId && (
+        <Link href="/properties" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+          <ArrowLeft size={14} /> Back to All Properties
+        </Link>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
