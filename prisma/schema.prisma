@@ -16,24 +16,34 @@ model Account {
   instagramId    String?
   createdAt      DateTime  @default(now())
 
-  // Per-property posting target
   monthlyPostTarget Int @default(20)
 
-  // Cached overview stats — refreshed hourly by cron
-  lastSyncAt       DateTime?
-  cachedMonthTotal Int       @default(0)
-  cachedMissedDays Int       @default(0)
-  cachedTodayPosted Int      @default(0)
-  cachedScheduled  Int       @default(0)
-  cachedSyncMonth  Int?
-  cachedSyncYear   Int?
-  username         String?
-  followers        Int       @default(0)
+  lastSyncAt        DateTime?
+  cachedMonthTotal  Int       @default(0)
+  cachedMissedDays  Int       @default(0)
+  cachedTodayPosted Int       @default(0)
+  cachedScheduled   Int       @default(0)
+  cachedSyncMonth   Int?
+  cachedSyncYear    Int?
+  username          String?
+  followers         Int       @default(0)
+  cachedStoriesCount Int      @default(0)
 
-  posts    Post[]
-  syncLogs AccountSyncLog[]
+  posts             Post[]
+  syncLogs          AccountSyncLog[]
+  followerSnapshots FollowerSnapshot[]
 
   @@unique([platform, pageId])
+}
+
+model FollowerSnapshot {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id])
+  followers Int
+  date      DateTime @default(now())
+
+  @@index([accountId, date])
 }
 
 model AccountSyncLog {

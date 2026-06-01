@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { getInstagramMediaForMonth, getInstagramAccountInfo } from "./meta";
+import { getInstagramMediaForMonth, getInstagramAccountInfo, getInstagramStoriesCount } from "./meta";
 
 export async function syncAllAccounts() {
   const now = new Date();
@@ -34,7 +34,7 @@ async function syncOneAccount(
   month: number
 ) {
   try {
-    const [media, info, scheduledCount] = await Promise.all([
+    const [media, info, scheduledCount, storiesCount] = await Promise.all([
       getInstagramMediaForMonth(account.instagramId!, account.accessToken, year, month),
       getInstagramAccountInfo(account.instagramId!, account.accessToken),
       prisma.post.count({
@@ -48,6 +48,7 @@ async function syncOneAccount(
           },
         },
       }),
+      getInstagramStoriesCount(account.instagramId!, account.accessToken),
     ]);
 
     // Import Instagram posts into our Post table so analytics can track them
@@ -82,6 +83,18 @@ async function syncOneAccount(
 
     const todayPosted = media.filter((m) => m.timestamp.slice(0, 10) === todayStr).length;
 
+    // Save daily follower snapshot (once per day max)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const existingSnapshot = await prisma.followerSnapshot.findFirst({
+      where: { accountId: account.id, date: { gte: todayStart } },
+    });
+    if (!existingSnapshot) {
+      await prisma.followerSnapshot.create({
+        data: { accountId: account.id, followers: info.followers_count },
+      });
+    }
+
     await prisma.account.update({
       where: { id: account.id },
       data: {
@@ -91,6 +104,7 @@ async function syncOneAccount(
         cachedScheduled: scheduledCount,
         cachedSyncMonth: month,
         cachedSyncYear: year,
+        cachedStoriesCount: storiesCount,
         username: info.username,
         followers: info.followers_count,
         lastSyncAt: new Date(),

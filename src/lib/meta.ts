@@ -236,4 +236,15 @@ export async function getInstagramAccountInfo(igUserId: string, token: string) {
   };
 }
 
+export async function getInstagramStoriesCount(igUserId: string, token: string): Promise<number> {
+  try {
+    const { data } = await api(token).get(`/${igUserId}/stories`, {
+      params: { fields: "id" },
+    });
+    return (data.data as Array<{ id: string }>).length;
+  } catch {
+    return 0;
+  }
+}
+
 type MetricMap = Record<string, number>;
