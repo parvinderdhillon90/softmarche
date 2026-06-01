@@ -2,10 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getFacebookPostInsights, getInstagramPostInsights } from "@/lib/meta";
 
-// Refresh analytics for all published posts
-export async function POST() {
+// Refresh analytics — optionally scoped to one account
+export async function POST(req: Request) {
+  const body = req.headers.get("content-type")?.includes("application/json")
+    ? await req.json().catch(() => ({}))
+    : {};
+  const accountId = body.accountId as string | undefined;
+
   const published = await prisma.post.findMany({
-    where: { status: "PUBLISHED", externalId: { not: null } },
+    where: {
+      status: "PUBLISHED",
+      externalId: { not: null },
+      ...(accountId ? { accountId } : {}),
+    },
     include: { account: true },
   });
 
@@ -46,10 +55,11 @@ export async function POST() {
   return NextResponse.json({ refreshed: succeeded, total: published.length });
 }
 
-// Aggregate analytics summary
+// Aggregate analytics — filterable by account and platform
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const platform = searchParams.get("platform");
+  const accountId = searchParams.get("accountId");
   const days = parseInt(searchParams.get("days") ?? "30");
 
   const since = new Date();
@@ -60,8 +70,12 @@ export async function GET(req: Request) {
       status: "PUBLISHED",
       publishedAt: { gte: since },
       ...(platform ? { platform: platform as "FACEBOOK" | "INSTAGRAM" } : {}),
+      ...(accountId ? { accountId } : {}),
     },
-    include: { analytics: true },
+    include: {
+      analytics: true,
+      account: { select: { pageName: true, platform: true } },
+    },
     orderBy: { publishedAt: "asc" },
   });
 

@@ -21,6 +21,13 @@ export async function syncAllAccounts() {
   }
 }
 
+function mapMediaType(igType: string): "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" {
+  if (igType === "VIDEO") return "VIDEO";
+  if (igType === "CAROUSEL_ALBUM") return "CAROUSEL";
+  if (igType === "REELS") return "REEL";
+  return "IMAGE";
+}
+
 async function syncOneAccount(
   account: { id: string; instagramId: string | null; accessToken: string },
   year: number,
@@ -42,6 +49,25 @@ async function syncOneAccount(
         },
       }),
     ]);
+
+    // Import Instagram posts into our Post table so analytics can track them
+    for (const item of media) {
+      const existing = await prisma.post.findFirst({ where: { externalId: item.id } });
+      if (!existing) {
+        await prisma.post.create({
+          data: {
+            accountId: account.id,
+            platform: "INSTAGRAM",
+            status: "PUBLISHED",
+            caption: item.caption ?? "",
+            mediaUrls: item.media_url ? [item.media_url] : [],
+            mediaType: mapMediaType(item.media_type),
+            publishedAt: new Date(item.timestamp),
+            externalId: item.id,
+          },
+        });
+      }
+    }
 
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
