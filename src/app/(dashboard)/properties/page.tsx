@@ -50,10 +50,7 @@ export default function PropertiesPage() {
   async function handleSyncAll() {
     setSyncing(true);
     try {
-      await fetch("/api/properties/sync", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET ?? ""}` },
-      });
+      await fetch("/api/properties/sync", { method: "POST" });
       await load();
     } finally {
       setSyncing(false);
