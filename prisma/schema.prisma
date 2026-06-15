@@ -7,30 +7,27 @@ datasource db {
 }
 
 model Account {
-  id             String    @id @default(cuid())
-  platform       Platform
-  pageId         String
-  pageName       String
-  accessToken    String
-  tokenExpiresAt DateTime?
-  instagramId    String?
-  createdAt      DateTime  @default(now())
-
-  monthlyPostTarget Int @default(20)
-
+  id                String             @id @default(cuid())
+  platform          Platform
+  pageId            String
+  pageName          String
+  accessToken       String
+  tokenExpiresAt    DateTime?
+  instagramId       String?
+  createdAt         DateTime           @default(now())
+  monthlyPostTarget Int                @default(20)
   lastSyncAt        DateTime?
-  cachedMonthTotal  Int       @default(0)
-  cachedMissedDays  Int       @default(0)
-  cachedTodayPosted Int       @default(0)
-  cachedScheduled   Int       @default(0)
+  cachedMonthTotal  Int                @default(0)
+  cachedMissedDays  Int                @default(0)
+  cachedTodayPosted Int                @default(0)
+  cachedScheduled   Int                @default(0)
   cachedSyncMonth   Int?
   cachedSyncYear    Int?
+  cachedStoriesCount Int               @default(0)
   username          String?
-  followers         Int       @default(0)
-  cachedStoriesCount Int      @default(0)
-
-  posts             Post[]
+  followers         Int                @default(0)
   syncLogs          AccountSyncLog[]
+  posts             Post[]
   followerSnapshots FollowerSnapshot[]
 
   @@unique([platform, pageId])
@@ -49,16 +46,15 @@ model FollowerSnapshot {
 model AccountSyncLog {
   id        String   @id @default(cuid())
   accountId String
-  account   Account  @relation(fields: [accountId], references: [id])
   syncedAt  DateTime @default(now())
   success   Boolean
   error     String?
+  account   Account  @relation(fields: [accountId], references: [id])
 }
 
 model Post {
   id          String     @id @default(cuid())
   accountId   String
-  account     Account    @relation(fields: [accountId], references: [id])
   platform    Platform
   status      PostStatus @default(DRAFT)
   caption     String
@@ -71,12 +67,12 @@ model Post {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   analytics   Analytics?
+  account     Account    @relation(fields: [accountId], references: [id])
 }
 
 model Analytics {
   id          String   @id @default(cuid())
   postId      String   @unique
-  post        Post     @relation(fields: [postId], references: [id])
   impressions Int      @default(0)
   reach       Int      @default(0)
   likes       Int      @default(0)
@@ -85,6 +81,19 @@ model Analytics {
   saves       Int      @default(0)
   clicks      Int      @default(0)
   fetchedAt   DateTime @default(now())
+  post        Post     @relation(fields: [postId], references: [id])
+}
+
+model User {
+  Id           Int       @id @default(autoincrement())
+  UserName     String    @unique
+  Email        String?
+  PasswordHash String
+  FullName     String?
+  Role         String    @default("USER")
+  IsActive     Boolean   @default(true)
+  LastLogin    DateTime?
+  CreatedOn    DateTime  @default(now())
 }
 
 enum Platform {
