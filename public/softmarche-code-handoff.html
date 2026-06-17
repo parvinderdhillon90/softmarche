@@ -1,0 +1,2746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Softmarche — Full Code Handoff</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+  .header { background: #1e40af; color: white; padding: 24px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header p { font-size: 14px; margin-top: 4px; opacity: 0.8; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  .alert { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 10px; padding: 16px 20px; margin-bottom: 28px; }
+  .alert h2 { font-size: 15px; font-weight: 700; color: #92400e; margin-bottom: 8px; }
+  .alert ol { margin-left: 20px; font-size: 14px; color: #78350f; line-height: 1.8; }
+  .alert code { background: #fde68a; padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  .section { margin-bottom: 36px; }
+  .section-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
+  .file-block { background: white; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .file-header { background: #f1f5f9; padding: 10px 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+  .file-path { font-family: monospace; font-size: 13px; font-weight: 600; color: #0f172a; }
+  .file-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+  .tag-new { background: #dcfce7; color: #166534; }
+  .tag-updated { background: #dbeafe; color: #1e40af; }
+  .tag-unchanged { background: #f1f5f9; color: #64748b; }
+  pre { padding: 16px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre; color: #1e293b; background: white; }
+  .toc { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin-bottom: 28px; }
+  .toc h2 { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+  .toc ul { list-style: none; columns: 2; }
+  .toc li { font-size: 13px; padding: 2px 0; color: #475569; font-family: monospace; }
+  @media print { .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Softmarche — Full Code Handoff</h1>
+  <p>Complete source code for developer deployment · Generated 17 Jun 2026</p>
+</div>
+
+<div class="container">
+
+  <div class="alert">
+    <h2>⚠️ Critical: Run this SQL on your Neon database FIRST before deploying</h2>
+    <ol>
+      <li>Open <strong>Neon dashboard → SQL Editor</strong> and run the SQL in <code>prisma/migrations/20260615000000_.../migration.sql</code> below</li>
+      <li>Run <code>npx prisma generate</code> in your project folder</li>
+      <li>Deploy to Vercel</li>
+    </ol>
+  </div>
+
+  <div class="toc">
+    <h2>Files in this handoff</h2>
+    <ul>
+      <li>prisma/schema.prisma</li>
+      <li>prisma/migrations/.../migration.sql</li>
+      <li>prisma.config.ts</li>
+      <li>vercel.json</li>
+      <li>src/types/index.ts</li>
+      <li>src/lib/prisma.ts</li>
+      <li>src/lib/meta.ts</li>
+      <li>src/lib/syncAccounts.ts</li>
+      <li>src/lib/accountStatus.ts</li>
+      <li>src/lib/scheduler.ts</li>
+      <li>src/app/page.tsx</li>
+      <li>src/app/layout.tsx</li>
+      <li>src/app/(dashboard)/layout.tsx</li>
+      <li>src/app/(dashboard)/properties/page.tsx</li>
+      <li>src/app/(dashboard)/monitor/page.tsx</li>
+      <li>src/app/(dashboard)/calendar/page.tsx</li>
+      <li>src/app/(dashboard)/analytics/page.tsx</li>
+      <li>src/app/(dashboard)/accounts/page.tsx</li>
+      <li>src/app/api/accounts/route.ts</li>
+      <li>src/app/api/posts/route.ts</li>
+      <li>src/app/api/posts/[id]/route.ts</li>
+      <li>src/app/api/publish/route.ts</li>
+      <li>src/app/api/cron/route.ts</li>
+      <li>src/app/api/analytics/route.ts</li>
+      <li>src/app/api/analytics/report/route.ts</li>
+      <li>src/app/api/properties/route.ts</li>
+      <li>src/app/api/properties/[id]/route.ts</li>
+      <li>src/app/api/properties/sync/route.ts</li>
+      <li>src/app/api/instagram/monitor/route.ts</li>
+      <li>src/components/ui/Badge.tsx</li>
+      <li>src/components/posts/PostForm.tsx</li>
+      <li>src/components/calendar/CalendarGrid.tsx</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ DATABASE ══ -->
+  <div class="section">
+    <div class="section-title">Database</div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">prisma/schema.prisma</span>
+        <span class="file-tag tag-updated">UPDATED — adds FollowerSnapshot + cachedStoriesCount</span>
+      </div>
+      <pre>generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String             @id @default(cuid())
+  platform          Platform
+  pageId            String
+  pageName          String
+  accessToken       String
+  tokenExpiresAt    DateTime?
+  instagramId       String?
+  createdAt         DateTime           @default(now())
+  monthlyPostTarget Int                @default(20)
+  lastSyncAt        DateTime?
+  cachedMonthTotal  Int                @default(0)
+  cachedMissedDays  Int                @default(0)
+  cachedTodayPosted Int                @default(0)
+  cachedScheduled   Int                @default(0)
+  cachedSyncMonth   Int?
+  cachedSyncYear    Int?
+  cachedStoriesCount Int               @default(0)
+  username          String?
+  followers         Int                @default(0)
+  syncLogs          AccountSyncLog[]
+  posts             Post[]
+  followerSnapshots FollowerSnapshot[]
+
+  @@unique([platform, pageId])
+}
+
+model FollowerSnapshot {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id])
+  followers Int
+  date      DateTime @default(now())
+
+  @@index([accountId, date])
+}
+
+model AccountSyncLog {
+  id        String   @id @default(cuid())
+  accountId String
+  syncedAt  DateTime @default(now())
+  success   Boolean
+  error     String?
+  account   Account  @relation(fields: [accountId], references: [id])
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  accountId   String
+  platform    Platform
+  status      PostStatus @default(DRAFT)
+  caption     String
+  mediaUrls   String[]
+  mediaType   MediaType  @default(IMAGE)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  externalId  String?
+  errorMsg    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  analytics   Analytics?
+  account     Account    @relation(fields: [accountId], references: [id])
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  postId      String   @unique
+  impressions Int      @default(0)
+  reach       Int      @default(0)
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  saves       Int      @default(0)
+  clicks      Int      @default(0)
+  fetchedAt   DateTime @default(now())
+  post        Post     @relation(fields: [postId], references: [id])
+}
+
+model User {
+  Id           Int       @id @default(autoincrement())
+  UserName     String    @unique
+  Email        String?
+  PasswordHash String
+  FullName     String?
+  Role         String    @default("USER")
+  IsActive     Boolean   @default(true)
+  LastLogin    DateTime?
+  CreatedOn    DateTime  @default(now())
+}
+
+enum Platform {
+  FACEBOOK
+  INSTAGRAM
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  REEL
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">prisma/migrations/20260615000000_add_follower_snapshot_and_stories/migration.sql</span>
+        <span class="file-tag tag-new">NEW — run this on Neon SQL Editor</span>
+      </div>
+      <pre>-- Add cachedStoriesCount column to Account
+ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "cachedStoriesCount" INTEGER NOT NULL DEFAULT 0;
+
+-- CreateTable FollowerSnapshot
+CREATE TABLE IF NOT EXISTS "FollowerSnapshot" (
+    "id" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "followers" INTEGER NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "FollowerSnapshot_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX IF NOT EXISTS "FollowerSnapshot_accountId_date_idx" ON "FollowerSnapshot"("accountId", "date");
+
+-- AddForeignKey
+ALTER TABLE "FollowerSnapshot" ADD CONSTRAINT "FollowerSnapshot_accountId_fkey"
+    FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">prisma.config.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import "dotenv/config";
+import { defineConfig } from "prisma/config";
+
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+  },
+  datasource: {
+    url: process.env["DATABASE_URL"],
+  },
+});</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">vercel.json</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>{
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "* * * * *"
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ TYPES + LIB ══ -->
+  <div class="section">
+    <div class="section-title">Types &amp; Library</div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/types/index.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>export type Platform = "FACEBOOK" | "INSTAGRAM";
+export type PostStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "FAILED";
+export type MediaType = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL";
+
+export interface Account {
+  id: string;
+  platform: Platform;
+  pageId: string;
+  pageName: string;
+  tokenExpiresAt: string | null;
+  instagramId: string | null;
+}
+
+export interface Analytics {
+  impressions: number;
+  reach: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  clicks: number;
+  fetchedAt: string;
+}
+
+export interface Post {
+  id: string;
+  accountId: string;
+  platform: Platform;
+  status: PostStatus;
+  caption: string;
+  mediaUrls: string[];
+  mediaType: MediaType;
+  scheduledAt: string | null;
+  publishedAt: string | null;
+  externalId: string | null;
+  errorMsg: string | null;
+  createdAt: string;
+  account: { pageName: string; platform: Platform };
+  analytics?: Analytics | null;
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/lib/prisma.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/lib/accountStatus.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>export type AccountStatus = "red" | "amber" | "green" | "blue";
+
+export function computeAccountStatus(account: {
+  cachedMonthTotal: number;
+  cachedMissedDays: number;
+  cachedTodayPosted: number;
+  monthlyPostTarget: number;
+  lastSyncAt: Date | null;
+}): AccountStatus {
+  const { cachedMonthTotal, cachedMissedDays, cachedTodayPosted, monthlyPostTarget } = account;
+
+  if (!account.lastSyncAt) return "red";
+
+  const pct = monthlyPostTarget > 0 ? cachedMonthTotal / monthlyPostTarget : 0;
+
+  if (pct >= 1.0) return "blue";
+  if (cachedMissedDays > 0 || cachedTodayPosted === 0) return "red";
+  if (pct >= 0.9) return "amber";
+  return "green";
+}
+
+export const STATUS_CONFIG: Record&lt;AccountStatus, { label: string; bg: string; border: string; text: string; ring: string }&gt; = {
+  red:   { label: "Issues",      bg: "bg-red-50",   border: "border-red-300",   text: "text-red-700",   ring: "ring-red-400" },
+  amber: { label: "Near target", bg: "bg-amber-50", border: "border-amber-300", text: "text-amber-700", ring: "ring-amber-400" },
+  green: { label: "On track",    bg: "bg-green-50", border: "border-green-300", text: "text-green-700", ring: "ring-green-400" },
+  blue:  { label: "Target met",  bg: "bg-blue-50",  border: "border-blue-300",  text: "text-blue-700",  ring: "ring-blue-400" },
+};</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/lib/scheduler.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { prisma } from "./prisma";
+import { publishFacebookPost, publishInstagramPost } from "./meta";
+import { PostStatus } from "@prisma/client";
+
+export async function processScheduledPosts() {
+  const due = await prisma.post.findMany({
+    where: {
+      status: PostStatus.SCHEDULED,
+      scheduledAt: { lte: new Date() },
+    },
+    include: { account: true },
+  });
+
+  await Promise.allSettled(
+    due.map(async (post) =&gt; {
+      try {
+        let externalId: string;
+
+        if (post.platform === "FACEBOOK") {
+          externalId = await publishFacebookPost(
+            post.account.pageId,
+            post.account.accessToken,
+            post.caption,
+            post.mediaUrls
+          );
+        } else {
+          if (!post.account.instagramId) throw new Error("No Instagram account linked");
+          externalId = await publishInstagramPost(
+            post.account.instagramId,
+            post.account.accessToken,
+            post.caption,
+            post.mediaUrls,
+            post.mediaType as "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL"
+          );
+        }
+
+        await prisma.post.update({
+          where: { id: post.id },
+          data: { status: PostStatus.PUBLISHED, publishedAt: new Date(), externalId },
+        });
+      } catch (err) {
+        await prisma.post.update({
+          where: { id: post.id },
+          data: {
+            status: PostStatus.FAILED,
+            errorMsg: err instanceof Error ? err.message : String(err),
+          },
+        });
+      }
+    })
+  );
+}</pre>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ META + SYNC ══ -->
+  <div class="section">
+    <div class="section-title">Meta API &amp; Sync</div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/lib/meta.ts</span>
+        <span class="file-tag tag-updated">UPDATED — adds getInstagramStoriesCount</span>
+      </div>
+      <pre>import axios from "axios";
+
+const GRAPH_BASE = "https://graph.facebook.com/v19.0";
+
+function api(token: string) {
+  return axios.create({
+    baseURL: GRAPH_BASE,
+    params: { access_token: token },
+  });
+}
+
+// ── Facebook ──────────────────────────────────────────────────────────────────
+
+export async function publishFacebookPost(
+  pageId: string,
+  token: string,
+  caption: string,
+  mediaUrls: string[]
+) {
+  const client = api(token);
+
+  if (mediaUrls.length === 0) {
+    const { data } = await client.post(`/${pageId}/feed`, { message: caption });
+    return data.id as string;
+  }
+
+  if (mediaUrls.length === 1) {
+    const { data } = await client.post(`/${pageId}/photos`, {
+      url: mediaUrls[0],
+      caption,
+    });
+    return data.id as string;
+  }
+
+  const photoIds = await Promise.all(
+    mediaUrls.map(async (url) =&gt; {
+      const { data } = await client.post(`/${pageId}/photos`, {
+        url,
+        published: false,
+      });
+      return { media_fbid: data.id };
+    })
+  );
+
+  const { data } = await client.post(`/${pageId}/feed`, {
+    message: caption,
+    attached_media: photoIds,
+  });
+  return data.id as string;
+}
+
+export async function getFacebookPostInsights(
+  postId: string,
+  token: string
+): Promise&lt;MetricMap&gt; {
+  const metrics = [
+    "post_impressions",
+    "post_impressions_unique",
+    "post_reactions_by_type_total",
+    "post_clicks",
+  ].join(",");
+
+  const { data } = await api(token).get(`/${postId}/insights`, {
+    params: { metric: metrics },
+  });
+
+  const map: MetricMap = {};
+  for (const item of data.data as Array&lt;{ name: string; values: Array&lt;{ value: number | Record&lt;string, number&gt; }&gt; }&gt;) {
+    const val = item.values[0]?.value;
+    if (typeof val === "number") {
+      map[item.name] = val;
+    } else if (typeof val === "object") {
+      map[item.name] = Object.values(val).reduce((a, b) =&gt; a + b, 0);
+    }
+  }
+  return map;
+}
+
+// ── Instagram ─────────────────────────────────────────────────────────────────
+
+export async function publishInstagramPost(
+  igUserId: string,
+  token: string,
+  caption: string,
+  mediaUrls: string[],
+  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL"
+) {
+  const client = api(token);
+
+  if (mediaType === "CAROUSEL") {
+    const containerIds = await Promise.all(
+      mediaUrls.map(async (url) =&gt; {
+        const { data } = await client.post(`/${igUserId}/media`, {
+          image_url: url,
+          is_carousel_item: true,
+        });
+        return data.id as string;
+      })
+    );
+
+    const { data: carousel } = await client.post(`/${igUserId}/media`, {
+      media_type: "CAROUSEL",
+      children: containerIds.join(","),
+      caption,
+    });
+    const { data: published } = await client.post(`/${igUserId}/media_publish`, {
+      creation_id: carousel.id,
+    });
+    return published.id as string;
+  }
+
+  const isVideo = mediaType === "VIDEO" || mediaType === "REEL";
+  const mediaPayload = isVideo
+    ? { video_url: mediaUrls[0], media_type: mediaType, caption }
+    : { image_url: mediaUrls[0], caption };
+
+  const { data: container } = await client.post(`/${igUserId}/media`, mediaPayload);
+  const { data: published } = await client.post(`/${igUserId}/media_publish`, {
+    creation_id: container.id,
+  });
+  return published.id as string;
+}
+
+export async function getInstagramPostInsights(
+  mediaId: string,
+  token: string
+): Promise&lt;MetricMap&gt; {
+  const metrics = ["impressions", "reach", "likes", "comments", "shares", "saves"].join(",");
+  const { data } = await api(token).get(`/${mediaId}/insights`, {
+    params: { metric: metrics },
+  });
+
+  const map: MetricMap = {};
+  for (const item of data.data as Array&lt;{ name: string; values: Array&lt;{ value: number }&gt; }&gt;) {
+    map[item.name] = item.values[0]?.value ?? 0;
+  }
+  return map;
+}
+
+// ── OAuth helper ──────────────────────────────────────────────────────────────
+
+export async function getLongLivedToken(shortToken: string) {
+  const { data } = await axios.get(`${GRAPH_BASE}/oauth/access_token`, {
+    params: {
+      grant_type: "fb_exchange_token",
+      client_id: process.env.META_APP_ID,
+      client_secret: process.env.META_APP_SECRET,
+      fb_exchange_token: shortToken,
+    },
+  });
+  return data as { access_token: string; expires_in: number };
+}
+
+export async function getUserPages(userToken: string) {
+  const { data } = await api(userToken).get("/me/accounts", {
+    params: { fields: "id,name,access_token,instagram_business_account" },
+  });
+  return data.data as Array&lt;{
+    id: string;
+    name: string;
+    access_token: string;
+    instagram_business_account?: { id: string };
+  }&gt;;
+}
+
+// ── Instagram monitoring ──────────────────────────────────────────────────────
+
+export interface IgMediaItem {
+  id: string;
+  timestamp: string;
+  media_type: string;
+  permalink: string;
+  caption?: string;
+  thumbnail_url?: string;
+  media_url?: string;
+}
+
+export async function getInstagramMediaForMonth(
+  igUserId: string,
+  token: string,
+  year: number,
+  month: number
+): Promise&lt;IgMediaItem[]&gt; {
+  const since = new Date(year, month - 1, 1);
+  const until = new Date(year, month, 1);
+
+  const client = api(token);
+  const items: IgMediaItem[] = [];
+
+  const { data } = await client.get(`/${igUserId}/media`, {
+    params: {
+      fields: "id,timestamp,media_type,permalink,caption,thumbnail_url,media_url",
+      since: Math.floor(since.getTime() / 1000),
+      until: Math.floor(until.getTime() / 1000),
+      limit: 50,
+    },
+  });
+  items.push(...(data.data as IgMediaItem[]));
+
+  return items.filter((item) =&gt; {
+    const d = new Date(item.timestamp);
+    return d &gt;= since &amp;&amp; d &lt; until;
+  });
+}
+
+export async function getInstagramAccountInfo(igUserId: string, token: string) {
+  const { data } = await api(token).get(`/${igUserId}`, {
+    params: { fields: "id,username,profile_picture_url,followers_count,media_count" },
+  });
+  return data as {
+    id: string;
+    username: string;
+    profile_picture_url?: string;
+    followers_count: number;
+    media_count: number;
+  };
+}
+
+export async function getInstagramStoriesCount(igUserId: string, token: string): Promise&lt;number&gt; {
+  try {
+    const { data } = await api(token).get(`/${igUserId}/stories`, {
+      params: { fields: "id" },
+    });
+    return (data.data as Array&lt;{ id: string }&gt;).length;
+  } catch {
+    return 0;
+  }
+}
+
+type MetricMap = Record&lt;string, number&gt;;</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/lib/syncAccounts.ts</span>
+        <span class="file-tag tag-updated">UPDATED — saves FollowerSnapshot + stories count</span>
+      </div>
+      <pre>import { prisma } from "./prisma";
+import { getInstagramMediaForMonth, getInstagramAccountInfo, getInstagramStoriesCount } from "./meta";
+
+export async function syncAllAccounts() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  const accounts = await prisma.account.findMany({
+    where: { instagramId: { not: null } },
+    select: { id: true, instagramId: true, accessToken: true },
+  });
+
+  const BATCH = 5;
+  for (let i = 0; i &lt; accounts.length; i += BATCH) {
+    const batch = accounts.slice(i, i + BATCH);
+    await Promise.allSettled(batch.map((a) =&gt; syncOneAccount(a, year, month)));
+    if (i + BATCH &lt; accounts.length) {
+      await new Promise((r) =&gt; setTimeout(r, 2000));
+    }
+  }
+}
+
+function mapMediaType(igType: string): "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" {
+  if (igType === "VIDEO") return "VIDEO";
+  if (igType === "CAROUSEL_ALBUM") return "CAROUSEL";
+  if (igType === "REELS") return "REEL";
+  return "IMAGE";
+}
+
+async function syncOneAccount(
+  account: { id: string; instagramId: string | null; accessToken: string },
+  year: number,
+  month: number
+) {
+  try {
+    const [media, info, scheduledCount, storiesCount] = await Promise.all([
+      getInstagramMediaForMonth(account.instagramId!, account.accessToken, year, month),
+      getInstagramAccountInfo(account.instagramId!, account.accessToken),
+      prisma.post.count({
+        where: {
+          accountId: account.id,
+          platform: "INSTAGRAM",
+          status: { in: ["SCHEDULED", "DRAFT"] },
+          scheduledAt: {
+            gte: new Date(year, month - 1, 1),
+            lt: new Date(year, month, 1),
+          },
+        },
+      }),
+      getInstagramStoriesCount(account.instagramId!, account.accessToken),
+    ]);
+
+    // Import Instagram posts into Post table so analytics can track them
+    for (const item of media) {
+      const existing = await prisma.post.findFirst({ where: { externalId: item.id } });
+      if (!existing) {
+        await prisma.post.create({
+          data: {
+            accountId: account.id,
+            platform: "INSTAGRAM",
+            status: "PUBLISHED",
+            caption: item.caption ?? "",
+            mediaUrls: item.media_url ? [item.media_url] : [],
+            mediaType: mapMediaType(item.media_type),
+            publishedAt: new Date(item.timestamp),
+            externalId: item.id,
+          },
+        });
+      }
+    }
+
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const daysElapsed = today.getDate();
+    const postedDates = new Set(media.map((m) =&gt; m.timestamp.slice(0, 10)));
+
+    let missedDays = 0;
+    for (let d = 1; d &lt; daysElapsed; d++) {
+      const ds = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      if (!postedDates.has(ds)) missedDays++;
+    }
+
+    const todayPosted = media.filter((m) =&gt; m.timestamp.slice(0, 10) === todayStr).length;
+
+    // Save daily follower snapshot (once per day)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const existingSnapshot = await prisma.followerSnapshot.findFirst({
+      where: { accountId: account.id, date: { gte: todayStart } },
+    });
+    if (!existingSnapshot) {
+      await prisma.followerSnapshot.create({
+        data: { accountId: account.id, followers: info.followers_count },
+      });
+    }
+
+    await prisma.account.update({
+      where: { id: account.id },
+      data: {
+        cachedMonthTotal: media.length,
+        cachedMissedDays: missedDays,
+        cachedTodayPosted: todayPosted,
+        cachedScheduled: scheduledCount,
+        cachedSyncMonth: month,
+        cachedSyncYear: year,
+        cachedStoriesCount: storiesCount,
+        username: info.username,
+        followers: info.followers_count,
+        lastSyncAt: new Date(),
+      },
+    });
+
+    await prisma.accountSyncLog.create({
+      data: { accountId: account.id, success: true },
+    });
+  } catch (err) {
+    await prisma.accountSyncLog.create({
+      data: {
+        accountId: account.id,
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    });
+  }
+}</pre>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ API ROUTES ══ -->
+  <div class="section">
+    <div class="section-title">API Routes</div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/accounts/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getUserPages, getLongLivedToken } from "@/lib/meta";
+import { Platform } from "@prisma/client";
+
+export async function GET() {
+  const accounts = await prisma.account.findMany({
+    select: { id: true, platform: true, pageId: true, pageName: true, tokenExpiresAt: true, instagramId: true },
+    orderBy: { createdAt: "desc" },
+  });
+  return NextResponse.json(accounts);
+}
+
+export async function POST(req: Request) {
+  const { shortToken } = await req.json();
+
+  const { access_token: userToken } = await getLongLivedToken(shortToken);
+  const pages = await getUserPages(userToken);
+
+  const created = await Promise.all(
+    pages.map(async (page) =&gt; {
+      const { access_token: pageToken, expires_in } = await getLongLivedToken(page.access_token);
+      const expiresAt = new Date(Date.now() + expires_in * 1000);
+
+      return prisma.account.upsert({
+        where: { platform_pageId: { platform: Platform.FACEBOOK, pageId: page.id } },
+        create: {
+          platform: Platform.FACEBOOK,
+          pageId: page.id,
+          pageName: page.name,
+          accessToken: pageToken,
+          tokenExpiresAt: expiresAt,
+          instagramId: page.instagram_business_account?.id ?? null,
+        },
+        update: {
+          pageName: page.name,
+          accessToken: pageToken,
+          tokenExpiresAt: expiresAt,
+          instagramId: page.instagram_business_account?.id ?? null,
+        },
+      });
+    })
+  );
+
+  return NextResponse.json(created, { status: 201 });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/posts/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { PostStatus, Prisma } from "@prisma/client";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const month = searchParams.get("month");
+  const status = searchParams.get("status") as PostStatus | null;
+
+  const where: Prisma.PostWhereInput = {};
+
+  if (month) {
+    const start = new Date(`${month}-01`);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + 1);
+    where.scheduledAt = { gte: start, lt: end };
+  }
+
+  if (status) where.status = status;
+
+  const posts = await prisma.post.findMany({
+    where,
+    include: { account: { select: { pageName: true, platform: true } }, analytics: true },
+    orderBy: { scheduledAt: "asc" },
+  });
+
+  return NextResponse.json(posts);
+}
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  const { accountId, platform, caption, mediaUrls, mediaType, scheduledAt } = body;
+
+  const post = await prisma.post.create({
+    data: {
+      accountId,
+      platform,
+      caption,
+      mediaUrls: mediaUrls ?? [],
+      mediaType: mediaType ?? "IMAGE",
+      status: scheduledAt ? PostStatus.SCHEDULED : PostStatus.DRAFT,
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+    },
+  });
+
+  return NextResponse.json(post, { status: 201 });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/posts/[id]/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { PostStatus } from "@prisma/client";
+
+export async function PATCH(req: Request, { params }: { params: Promise&lt;{ id: string }&gt; }) {
+  const { id } = await params;
+  const body = await req.json();
+
+  const updated = await prisma.post.update({
+    where: { id },
+    data: {
+      caption: body.caption,
+      mediaUrls: body.mediaUrls,
+      mediaType: body.mediaType,
+      scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : undefined,
+      status: body.scheduledAt ? PostStatus.SCHEDULED : body.status,
+    },
+  });
+
+  return NextResponse.json(updated);
+}
+
+export async function DELETE(_: Request, { params }: { params: Promise&lt;{ id: string }&gt; }) {
+  const { id } = await params;
+  await prisma.post.delete({ where: { id } });
+  return new NextResponse(null, { status: 204 });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/publish/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { publishFacebookPost, publishInstagramPost } from "@/lib/meta";
+import { PostStatus } from "@prisma/client";
+
+export async function POST(req: Request) {
+  const { postId } = await req.json();
+
+  const post = await prisma.post.findUniqueOrThrow({
+    where: { id: postId },
+    include: { account: true },
+  });
+
+  try {
+    let externalId: string;
+
+    if (post.platform === "FACEBOOK") {
+      externalId = await publishFacebookPost(
+        post.account.pageId,
+        post.account.accessToken,
+        post.caption,
+        post.mediaUrls
+      );
+    } else {
+      if (!post.account.instagramId) {
+        return NextResponse.json({ error: "No Instagram account linked to this page" }, { status: 400 });
+      }
+      externalId = await publishInstagramPost(
+        post.account.instagramId,
+        post.account.accessToken,
+        post.caption,
+        post.mediaUrls,
+        post.mediaType as "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL"
+      );
+    }
+
+    const updated = await prisma.post.update({
+      where: { id: postId },
+      data: { status: PostStatus.PUBLISHED, publishedAt: new Date(), externalId },
+    });
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await prisma.post.update({
+      where: { id: postId },
+      data: { status: PostStatus.FAILED, errorMsg: msg },
+    });
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/cron/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { processScheduledPosts } from "@/lib/scheduler";
+import { syncAllAccounts } from "@/lib/syncAccounts";
+
+export async function GET(req: Request) {
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  await processScheduledPosts();
+
+  if (new Date().getMinutes() === 0) {
+    syncAllAccounts().catch(console.error);
+  }
+
+  return NextResponse.json({ ok: true });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/analytics/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getFacebookPostInsights, getInstagramPostInsights } from "@/lib/meta";
+
+export async function POST(req: Request) {
+  const body = req.headers.get("content-type")?.includes("application/json")
+    ? await req.json().catch(() =&gt; ({}))
+    : {};
+  const accountId = body.accountId as string | undefined;
+
+  const published = await prisma.post.findMany({
+    where: {
+      status: "PUBLISHED",
+      externalId: { not: null },
+      ...(accountId ? { accountId } : {}),
+    },
+    include: { account: true },
+  });
+
+  const results = await Promise.allSettled(
+    published.map(async (post) =&gt; {
+      const metrics =
+        post.platform === "FACEBOOK"
+          ? await getFacebookPostInsights(post.externalId!, post.account.accessToken)
+          : await getInstagramPostInsights(post.externalId!, post.account.accessToken);
+
+      return prisma.analytics.upsert({
+        where: { postId: post.id },
+        create: {
+          postId: post.id,
+          impressions: metrics["post_impressions"] ?? metrics["impressions"] ?? 0,
+          reach: metrics["post_impressions_unique"] ?? metrics["reach"] ?? 0,
+          likes: metrics["post_reactions_by_type_total"] ?? metrics["likes"] ?? 0,
+          comments: metrics["comments"] ?? 0,
+          shares: metrics["shares"] ?? 0,
+          saves: metrics["saves"] ?? 0,
+          clicks: metrics["post_clicks"] ?? metrics["clicks"] ?? 0,
+        },
+        update: {
+          impressions: metrics["post_impressions"] ?? metrics["impressions"] ?? 0,
+          reach: metrics["post_impressions_unique"] ?? metrics["reach"] ?? 0,
+          likes: metrics["post_reactions_by_type_total"] ?? metrics["likes"] ?? 0,
+          comments: metrics["comments"] ?? 0,
+          shares: metrics["shares"] ?? 0,
+          saves: metrics["saves"] ?? 0,
+          clicks: metrics["post_clicks"] ?? metrics["clicks"] ?? 0,
+          fetchedAt: new Date(),
+        },
+      });
+    })
+  );
+
+  const succeeded = results.filter((r) =&gt; r.status === "fulfilled").length;
+  return NextResponse.json({ refreshed: succeeded, total: published.length });
+}
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const platform = searchParams.get("platform");
+  const accountId = searchParams.get("accountId");
+  const days = parseInt(searchParams.get("days") ?? "30");
+
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const posts = await prisma.post.findMany({
+    where: {
+      status: "PUBLISHED",
+      publishedAt: { gte: since },
+      ...(platform ? { platform: platform as "FACEBOOK" | "INSTAGRAM" } : {}),
+      ...(accountId ? { accountId } : {}),
+    },
+    include: {
+      analytics: true,
+      account: { select: { pageName: true, platform: true } },
+    },
+    orderBy: { publishedAt: "asc" },
+  });
+
+  const totals = posts.reduce(
+    (acc, p) =&gt; {
+      if (!p.analytics) return acc;
+      acc.impressions += p.analytics.impressions;
+      acc.reach += p.analytics.reach;
+      acc.likes += p.analytics.likes;
+      acc.comments += p.analytics.comments;
+      acc.shares += p.analytics.shares;
+      acc.saves += p.analytics.saves;
+      acc.clicks += p.analytics.clicks;
+      return acc;
+    },
+    { impressions: 0, reach: 0, likes: 0, comments: 0, shares: 0, saves: 0, clicks: 0 }
+  );
+
+  return NextResponse.json({ totals, posts, postCount: posts.length });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/analytics/report/route.ts</span>
+        <span class="file-tag tag-new">NEW — enhanced analytics with last-month comparison</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getFacebookPostInsights, getInstagramPostInsights } from "@/lib/meta";
+
+function periodRange(year: number, month: number) {
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 1);
+  return { start, end };
+}
+
+function prevMonth(year: number, month: number) {
+  return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
+}
+
+function sumMetrics(posts: Array&lt;{ analytics: { impressions: number; reach: number; likes: number; comments: number; shares: number; saves: number; clicks: number } | null }&gt;) {
+  return posts.reduce(
+    (acc, p) =&gt; {
+      if (!p.analytics) return acc;
+      acc.impressions += p.analytics.impressions;
+      acc.reach       += p.analytics.reach;
+      acc.likes       += p.analytics.likes;
+      acc.comments    += p.analytics.comments;
+      acc.shares      += p.analytics.shares;
+      acc.saves       += p.analytics.saves;
+      acc.clicks      += p.analytics.clicks;
+      return acc;
+    },
+    { impressions: 0, reach: 0, likes: 0, comments: 0, shares: 0, saves: 0, clicks: 0 }
+  );
+}
+
+export async function POST(req: Request) {
+  const { accountId } = await req.json();
+  if (!accountId) return NextResponse.json({ error: "accountId required" }, { status: 400 });
+
+  const published = await prisma.post.findMany({
+    where: { accountId, status: "PUBLISHED", externalId: { not: null } },
+    include: { account: true },
+  });
+
+  await Promise.allSettled(
+    published.map(async (post) =&gt; {
+      try {
+        const metrics =
+          post.platform === "FACEBOOK"
+            ? await getFacebookPostInsights(post.externalId!, post.account.accessToken)
+            : await getInstagramPostInsights(post.externalId!, post.account.accessToken);
+
+        return prisma.analytics.upsert({
+          where: { postId: post.id },
+          create: {
+            postId: post.id,
+            impressions: metrics["post_impressions"] ?? metrics["impressions"] ?? 0,
+            reach:       metrics["post_impressions_unique"] ?? metrics["reach"] ?? 0,
+            likes:       metrics["post_reactions_by_type_total"] ?? metrics["likes"] ?? 0,
+            comments:    metrics["comments"] ?? 0,
+            shares:      metrics["shares"] ?? 0,
+            saves:       metrics["saves"] ?? 0,
+            clicks:      metrics["post_clicks"] ?? metrics["clicks"] ?? 0,
+          },
+          update: {
+            impressions: metrics["post_impressions"] ?? metrics["impressions"] ?? 0,
+            reach:       metrics["post_impressions_unique"] ?? metrics["reach"] ?? 0,
+            likes:       metrics["post_reactions_by_type_total"] ?? metrics["likes"] ?? 0,
+            comments:    metrics["comments"] ?? 0,
+            shares:      metrics["shares"] ?? 0,
+            saves:       metrics["saves"] ?? 0,
+            clicks:      metrics["post_clicks"] ?? metrics["clicks"] ?? 0,
+            fetchedAt:   new Date(),
+          },
+        });
+      } catch {
+        // skip posts whose insights aren't available yet
+      }
+    })
+  );
+
+  return NextResponse.json({ ok: true, refreshed: published.length });
+}
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const accountId = searchParams.get("accountId");
+  if (!accountId) return NextResponse.json({ error: "accountId required" }, { status: 400 });
+
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+  const { year: prevYear, month: prevMonthNum } = prevMonth(curYear, curMonth);
+
+  const cur  = periodRange(curYear, curMonth);
+  const prev = periodRange(prevYear, prevMonthNum);
+
+  const [account, curPosts, prevPosts] = await Promise.all([
+    prisma.account.findUnique({
+      where: { id: accountId },
+      select: { followers: true, cachedStoriesCount: true, pageName: true, username: true },
+    }),
+    prisma.post.findMany({
+      where: { accountId, status: "PUBLISHED", publishedAt: { gte: cur.start, lt: cur.end } },
+      include: { analytics: true },
+      orderBy: { publishedAt: "asc" },
+    }),
+    prisma.post.findMany({
+      where: { accountId, status: "PUBLISHED", publishedAt: { gte: prev.start, lt: prev.end } },
+      include: { analytics: true },
+    }),
+  ]);
+
+  if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const oldSnapshot = await prisma.followerSnapshot.findFirst({
+    where: { accountId, date: { lte: thirtyDaysAgo } },
+    orderBy: { date: "desc" },
+  });
+
+  const followerChange = oldSnapshot ? account.followers - oldSnapshot.followers : null;
+
+  const breakdown = (posts: typeof curPosts) =&gt; ({
+    total:    posts.length,
+    reels:    posts.filter((p) =&gt; p.mediaType === "REEL").length,
+    static:   posts.filter((p) =&gt; p.mediaType === "IMAGE").length,
+    carousel: posts.filter((p) =&gt; p.mediaType === "CAROUSEL").length,
+    video:    posts.filter((p) =&gt; p.mediaType === "VIDEO").length,
+  });
+
+  const curMetrics  = sumMetrics(curPosts);
+  const prevMetrics = sumMetrics(prevPosts);
+
+  const engagementRate = (m: typeof curMetrics) =&gt;
+    m.reach &gt; 0 ? +((( m.likes + m.comments + m.shares + m.saves) / m.reach) * 100).toFixed(2) : 0;
+
+  const topPosts = [...curPosts]
+    .filter((p) =&gt; p.analytics)
+    .sort((a, b) =&gt; (b.analytics?.impressions ?? 0) - (a.analytics?.impressions ?? 0))
+    .slice(0, 5)
+    .map((p) =&gt; ({
+      id:          p.id,
+      caption:     p.caption.slice(0, 100),
+      mediaType:   p.mediaType,
+      publishedAt: p.publishedAt,
+      mediaUrl:    p.mediaUrls[0] ?? null,
+      impressions: p.analytics?.impressions ?? 0,
+      reach:       p.analytics?.reach ?? 0,
+      likes:       p.analytics?.likes ?? 0,
+      comments:    p.analytics?.comments ?? 0,
+      shares:      p.analytics?.shares ?? 0,
+      saves:       p.analytics?.saves ?? 0,
+    }));
+
+  const chartMap = new Map&lt;string, { impressions: number; reach: number; likes: number }&gt;();
+  for (const p of curPosts) {
+    if (!p.publishedAt || !p.analytics) continue;
+    const key = p.publishedAt.toISOString().slice(0, 10);
+    const existing = chartMap.get(key) ?? { impressions: 0, reach: 0, likes: 0 };
+    chartMap.set(key, {
+      impressions: existing.impressions + p.analytics.impressions,
+      reach:       existing.reach       + p.analytics.reach,
+      likes:       existing.likes       + p.analytics.likes,
+    });
+  }
+  const chartData = Array.from(chartMap.entries())
+    .sort(([a], [b]) =&gt; a.localeCompare(b))
+    .map(([date, vals]) =&gt; ({ date, ...vals }));
+
+  return NextResponse.json({
+    account: { pageName: account.pageName, username: account.username },
+    period: { year: curYear, month: curMonth },
+    prevPeriod: { year: prevYear, month: prevMonthNum },
+    followers: {
+      current: account.followers,
+      change: followerChange,
+      changePercent: oldSnapshot &amp;&amp; oldSnapshot.followers &gt; 0
+        ? +((followerChange! / oldSnapshot.followers) * 100).toFixed(2)
+        : null,
+    },
+    storiesCount: account.cachedStoriesCount,
+    current: {
+      breakdown: breakdown(curPosts),
+      metrics: { ...curMetrics, engagementRate: engagementRate(curMetrics) },
+    },
+    previous: {
+      breakdown: breakdown(prevPosts),
+      metrics: { ...prevMetrics, engagementRate: engagementRate(prevMetrics) },
+    },
+    topPosts,
+    chartData,
+  });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/properties/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { computeAccountStatus } from "@/lib/accountStatus";
+
+export async function GET() {
+  const accounts = await prisma.account.findMany({
+    where: { instagramId: { not: null } },
+    select: {
+      id: true,
+      pageName: true,
+      username: true,
+      followers: true,
+      monthlyPostTarget: true,
+      cachedMonthTotal: true,
+      cachedMissedDays: true,
+      cachedTodayPosted: true,
+      cachedScheduled: true,
+      cachedSyncMonth: true,
+      cachedSyncYear: true,
+      lastSyncAt: true,
+    },
+    orderBy: { pageName: "asc" },
+  });
+
+  const result = accounts.map((a) =&gt; ({
+    ...a,
+    status: computeAccountStatus(a),
+  }));
+
+  return NextResponse.json(result);
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/properties/[id]/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function PATCH(req: Request, { params }: { params: Promise&lt;{ id: string }&gt; }) {
+  const { id } = await params;
+  const { monthlyPostTarget } = await req.json();
+
+  if (typeof monthlyPostTarget !== "number" || monthlyPostTarget &lt; 1) {
+    return NextResponse.json({ error: "Invalid target" }, { status: 400 });
+  }
+
+  const updated = await prisma.account.update({
+    where: { id },
+    data: { monthlyPostTarget },
+    select: { id: true, monthlyPostTarget: true },
+  });
+
+  return NextResponse.json(updated);
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/properties/sync/route.ts</span>
+        <span class="file-tag tag-updated">UPDATED — auth check removed so browser can call it</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { syncAllAccounts } from "@/lib/syncAccounts";
+
+export async function POST() {
+  await syncAllAccounts();
+  return NextResponse.json({ ok: true });
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/api/instagram/monitor/route.ts</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getInstagramMediaForMonth, getInstagramAccountInfo } from "@/lib/meta";
+import { getDaysInMonth, format, isToday, startOfDay } from "date-fns";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const accountId = searchParams.get("accountId");
+  const year = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()));
+  const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1));
+
+  if (!accountId) {
+    return NextResponse.json({ error: "accountId is required" }, { status: 400 });
+  }
+
+  const account = await prisma.account.findUnique({ where: { id: accountId } });
+  if (!account?.instagramId) {
+    return NextResponse.json({ error: "No Instagram account linked" }, { status: 404 });
+  }
+
+  const [media, info, scheduledPosts] = await Promise.all([
+    getInstagramMediaForMonth(account.instagramId, account.accessToken, year, month),
+    getInstagramAccountInfo(account.instagramId, account.accessToken),
+    prisma.post.findMany({
+      where: {
+        accountId,
+        platform: "INSTAGRAM",
+        status: { in: ["SCHEDULED", "DRAFT"] },
+        scheduledAt: {
+          gte: new Date(year, month - 1, 1),
+          lt: new Date(year, month, 1),
+        },
+      },
+      select: { id: true, scheduledAt: true, status: true, caption: true },
+    }),
+  ]);
+
+  const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+
+  const days = Array.from({ length: daysInMonth }, (_, i) =&gt; {
+    const day = i + 1;
+    const date = new Date(year, month - 1, day);
+    const dateStr = format(date, "yyyy-MM-dd");
+
+    const published = media.filter(
+      (m) =&gt; format(new Date(m.timestamp), "yyyy-MM-dd") === dateStr
+    );
+    const scheduled = scheduledPosts.filter(
+      (p) =&gt; p.scheduledAt &amp;&amp; format(new Date(p.scheduledAt), "yyyy-MM-dd") === dateStr
+    );
+
+    const isPast = startOfDay(date) &lt; startOfDay(new Date());
+    const isTodayFlag = isToday(date);
+
+    let status: "published" | "scheduled" | "missed" | "today-done" | "today-pending" | "future";
+    if (isTodayFlag) {
+      status = published.length &gt; 0 ? "today-done" : "today-pending";
+    } else if (isPast) {
+      status = published.length &gt; 0 ? "published" : "missed";
+    } else {
+      status = scheduled.length &gt; 0 ? "scheduled" : "future";
+    }
+
+    return {
+      day,
+      date: dateStr,
+      isToday: isTodayFlag,
+      status,
+      publishedCount: published.length,
+      scheduledCount: scheduled.length,
+      posts: published.map((m) =&gt; ({
+        id: m.id,
+        time: format(new Date(m.timestamp), "HH:mm"),
+        type: m.media_type,
+        permalink: m.permalink,
+        caption: m.caption?.slice(0, 80),
+        thumbnail: m.thumbnail_url ?? m.media_url,
+      })),
+      scheduled: scheduled.map((p) =&gt; ({
+        id: p.id,
+        time: p.scheduledAt ? format(new Date(p.scheduledAt), "HH:mm") : null,
+        caption: p.caption?.slice(0, 80),
+        status: p.status,
+      })),
+    };
+  });
+
+  const todayPosted = days.find((d) =&gt; d.isToday)?.publishedCount ?? 0;
+  const monthTotal = media.length;
+  const missedDays = days.filter((d) =&gt; d.status === "missed").length;
+  const scheduledTotal = scheduledPosts.length;
+
+  return NextResponse.json({
+    account: {
+      username: info.username,
+      profilePicture: info.profile_picture_url,
+      followers: info.followers_count,
+    },
+    summary: { monthTotal, todayPosted, missedDays, scheduledTotal, month, year },
+    days,
+  });
+}</pre>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ PAGES ══ -->
+  <div class="section">
+    <div class="section-title">Pages</div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/page.tsx</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { redirect } from "next/navigation";
+
+export default function Home() {
+  redirect("/properties");
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/layout.tsx</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import type { Metadata } from "next";
+import { Geist } from "next/font/google";
+import "./globals.css";
+
+const geist = Geist({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Softmarche — Social Media Manager",
+  description: "Schedule and track Facebook &amp; Instagram posts",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;html lang="en"&gt;
+      &lt;body className={`${geist.className} bg-gray-50 text-gray-900 antialiased`}&gt;{children}&lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/(dashboard)/layout.tsx</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import Link from "next/link";
+import { CalendarDays, BarChart2, Settings, Activity, Building2 } from "lucide-react";
+
+const nav = [
+  { href: "/properties", label: "Properties",   icon: Building2 },
+  { href: "/monitor",    label: "Post Monitor", icon: Activity },
+  { href: "/calendar",   label: "Calendar",     icon: CalendarDays },
+  { href: "/analytics",  label: "Analytics",    icon: BarChart2 },
+  { href: "/accounts",   label: "Accounts",     icon: Settings },
+];
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;div className="flex h-screen"&gt;
+      &lt;aside className="w-56 bg-white border-r border-gray-200 flex flex-col"&gt;
+        &lt;div className="h-16 flex items-center px-5 border-b border-gray-200"&gt;
+          &lt;span className="text-lg font-bold text-blue-600 tracking-tight"&gt;Softmarche&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;nav className="flex-1 py-4 space-y-1 px-3"&gt;
+          {nav.map(({ href, label, icon: Icon }) =&gt; (
+            &lt;Link key={href} href={href} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"&gt;
+              &lt;Icon size={18} /&gt;
+              {label}
+            &lt;/Link&gt;
+          ))}
+        &lt;/nav&gt;
+      &lt;/aside&gt;
+      &lt;main className="flex-1 overflow-auto"&gt;{children}&lt;/main&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/(dashboard)/analytics/page.tsx</span>
+        <span class="file-tag tag-new">NEW — full enhanced analytics dashboard</span>
+      </div>
+      <pre>"use client";
+
+import { useState, useEffect } from "react";
+import { RefreshCw, TrendingUp, TrendingDown, Minus, Users, Image, Film, LayoutGrid, Video, BookOpen } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Account } from "@/types";
+import { format } from "date-fns";
+
+interface MetricSet {
+  impressions: number; reach: number; likes: number; comments: number;
+  shares: number; saves: number; clicks: number; engagementRate: number;
+}
+interface Breakdown { total: number; reels: number; static: number; carousel: number; video: number; }
+interface TopPost {
+  id: string; caption: string; mediaType: string; publishedAt: string | null;
+  mediaUrl: string | null; impressions: number; reach: number; likes: number;
+  comments: number; shares: number; saves: number;
+}
+interface Report {
+  account: { pageName: string; username: string | null };
+  period: { year: number; month: number };
+  prevPeriod: { year: number; month: number };
+  followers: { current: number; change: number | null; changePercent: number | null };
+  storiesCount: number;
+  current: { breakdown: Breakdown; metrics: MetricSet };
+  previous: { breakdown: Breakdown; metrics: MetricSet };
+  topPosts: TopPost[];
+  chartData: { date: string; impressions: number; reach: number; likes: number }[];
+}
+
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function Delta({ current, previous, suffix = "" }: { current: number; previous: number; suffix?: string }) {
+  if (previous === 0) return &lt;span className="text-xs text-gray-400"&gt;—&lt;/span&gt;;
+  const pct = (((current - previous) / previous) * 100).toFixed(1);
+  const up = current &gt;= previous;
+  return (
+    &lt;span className={`text-xs font-semibold flex items-center gap-0.5 ${up ? "text-green-600" : "text-red-500"}`}&gt;
+      {up ? &lt;TrendingUp size={11}/&gt; : &lt;TrendingDown size={11}/&gt;}
+      {up ? "+" : ""}{pct}%{suffix}
+    &lt;/span&gt;
+  );
+}
+
+function StatCard({ label, current, previous, icon, format: fmt = (v: number) =&gt; v.toLocaleString(), accent = "blue" }:
+  { label: string; current: number; previous: number; icon?: React.ReactNode; format?: (v: number) =&gt; string; accent?: string }) {
+  const accentMap: Record&lt;string, string&gt; = {
+    blue: "text-blue-600", green: "text-green-600", pink: "text-pink-500",
+    purple: "text-purple-600", amber: "text-amber-500", indigo: "text-indigo-600",
+  };
+  return (
+    &lt;div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4"&gt;
+      &lt;div className="flex items-center justify-between mb-1"&gt;
+        &lt;span className="text-xs text-gray-500 font-medium"&gt;{label}&lt;/span&gt;
+        {icon &amp;&amp; &lt;span className={accentMap[accent] ?? "text-gray-400"}&gt;{icon}&lt;/span&gt;}
+      &lt;/div&gt;
+      &lt;p className={`text-2xl font-bold ${accentMap[accent] ?? "text-gray-900"}`}&gt;{fmt(current)}&lt;/p&gt;
+      &lt;div className="flex items-center justify-between mt-1.5"&gt;
+        &lt;span className="text-xs text-gray-400"&gt;vs {fmt(previous)} last month&lt;/span&gt;
+        &lt;Delta current={current} previous={previous} /&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default function AnalyticsPage() {
+  const [accounts, setAccounts] = useState&lt;Account[]&gt;([]);
+  const [accountId, setAccountId] = useState("");
+  const [report, setReport] = useState&lt;Report | null&gt;(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() =&gt; {
+    fetch("/api/accounts").then((r) =&gt; r.json()).then((list: Account[]) =&gt; {
+      const ig = list.filter((a) =&gt; a.instagramId);
+      setAccounts(ig);
+      if (ig.length &gt; 0) setAccountId(ig[0].id);
+    });
+  }, []);
+
+  useEffect(() =&gt; {
+    if (!accountId) return;
+    setLoading(true);
+    fetch(`/api/analytics/report?accountId=${accountId}`)
+      .then((r) =&gt; r.json())
+      .then((d) =&gt; { setReport(d); setLoading(false); });
+  }, [accountId]);
+
+  async function handleRefresh() {
+    if (!accountId) return;
+    setRefreshing(true);
+    await fetch("/api/analytics/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId }),
+    });
+    const res = await fetch(`/api/analytics/report?accountId=${accountId}`);
+    setReport(await res.json());
+    setRefreshing(false);
+  }
+
+  const cur  = report?.current;
+  const prev = report?.previous;
+
+  return (
+    &lt;div className="p-6 max-w-7xl mx-auto space-y-6"&gt;
+      &lt;div className="flex items-center justify-between flex-wrap gap-3"&gt;
+        &lt;div&gt;
+          &lt;h1 className="text-2xl font-bold text-gray-900"&gt;Analytics&lt;/h1&gt;
+          {report &amp;&amp; (
+            &lt;p className="text-sm text-gray-500 mt-0.5"&gt;
+              {MONTH_NAMES[report.period.month - 1]} {report.period.year} vs{" "}
+              {MONTH_NAMES[report.prevPeriod.month - 1]} {report.prevPeriod.year}
+            &lt;/p&gt;
+          )}
+        &lt;/div&gt;
+        &lt;div className="flex items-center gap-3"&gt;
+          &lt;select
+            value={accountId}
+            onChange={(e) =&gt; setAccountId(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          &gt;
+            &lt;option value=""&gt;Select property…&lt;/option&gt;
+            {accounts.map((a) =&gt; &lt;option key={a.id} value={a.id}&gt;{a.pageName}&lt;/option&gt;)}
+          &lt;/select&gt;
+          &lt;button
+            onClick={handleRefresh}
+            disabled={refreshing || !accountId}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          &gt;
+            &lt;RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /&gt;
+            {refreshing ? "Refreshing…" : "Refresh"}
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      {!accountId &amp;&amp; (
+        &lt;div className="text-center py-16 text-gray-400"&gt;&lt;p&gt;Select a property to view analytics&lt;/p&gt;&lt;/div&gt;
+      )}
+
+      {loading &amp;&amp; accountId &amp;&amp; (
+        &lt;div className="text-center py-16 text-gray-400 text-sm"&gt;Loading…&lt;/div&gt;
+      )}
+
+      {report &amp;&amp; !loading &amp;&amp; (
+        &lt;&gt;
+          &lt;div&gt;
+            &lt;h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3"&gt;Posts this month&lt;/h2&gt;
+            &lt;div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"&gt;
+              {[
+                { label: "Total posts",  cur: cur!.breakdown.total,    prev: prev!.breakdown.total,    icon: &lt;BookOpen size={15}/&gt;,   accent: "blue" },
+                { label: "Reels",        cur: cur!.breakdown.reels,    prev: prev!.breakdown.reels,    icon: &lt;Film size={15}/&gt;,       accent: "purple" },
+                { label: "Static posts", cur: cur!.breakdown.static,   prev: prev!.breakdown.static,   icon: &lt;Image size={15}/&gt;,      accent: "pink" },
+                { label: "Carousels",    cur: cur!.breakdown.carousel, prev: prev!.breakdown.carousel, icon: &lt;LayoutGrid size={15}/&gt;, accent: "indigo" },
+                { label: "Videos",       cur: cur!.breakdown.video,    prev: prev!.breakdown.video,    icon: &lt;Video size={15}/&gt;,      accent: "amber" },
+                { label: "Live stories", cur: report.storiesCount,     prev: 0,                        icon: &lt;Users size={15}/&gt;,      accent: "green" },
+              ].map(({ label, cur: c, prev: p, icon, accent }) =&gt; (
+                &lt;div key={label} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4"&gt;
+                  &lt;div className="flex items-center justify-between mb-1"&gt;
+                    &lt;span className="text-xs text-gray-500 font-medium"&gt;{label}&lt;/span&gt;
+                    &lt;span className={`${accent === "blue" ? "text-blue-600" : accent === "purple" ? "text-purple-600" : accent === "pink" ? "text-pink-500" : accent === "indigo" ? "text-indigo-600" : accent === "amber" ? "text-amber-500" : "text-green-600"}`}&gt;{icon}&lt;/span&gt;
+                  &lt;/div&gt;
+                  &lt;p className="text-2xl font-bold text-gray-900"&gt;{c}&lt;/p&gt;
+                  {label !== "Live stories" ? (
+                    &lt;div className="flex items-center justify-between mt-1.5"&gt;
+                      &lt;span className="text-xs text-gray-400"&gt;was {p}&lt;/span&gt;
+                      &lt;Delta current={c} previous={p} /&gt;
+                    &lt;/div&gt;
+                  ) : (
+                    &lt;p className="text-xs text-gray-400 mt-1.5"&gt;right now&lt;/p&gt;
+                  )}
+                &lt;/div&gt;
+              ))}
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          &lt;div&gt;
+            &lt;h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3"&gt;Followers&lt;/h2&gt;
+            &lt;div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-6 flex-wrap"&gt;
+              &lt;div&gt;
+                &lt;p className="text-xs text-gray-500 font-medium mb-1"&gt;Total followers&lt;/p&gt;
+                &lt;p className="text-4xl font-bold text-gray-900"&gt;{report.followers.current.toLocaleString()}&lt;/p&gt;
+              &lt;/div&gt;
+              &lt;div className="h-12 w-px bg-gray-200 hidden sm:block" /&gt;
+              &lt;div&gt;
+                &lt;p className="text-xs text-gray-500 font-medium mb-1"&gt;Change vs last month&lt;/p&gt;
+                {report.followers.change !== null ? (
+                  &lt;div className="flex items-center gap-2"&gt;
+                    &lt;span className={`text-2xl font-bold ${report.followers.change &gt;= 0 ? "text-green-600" : "text-red-500"}`}&gt;
+                      {report.followers.change &gt;= 0 ? "+" : ""}{report.followers.change.toLocaleString()}
+                    &lt;/span&gt;
+                    {report.followers.changePercent !== null &amp;&amp; (
+                      &lt;span className={`text-sm font-semibold flex items-center gap-1 ${report.followers.change &gt;= 0 ? "text-green-600" : "text-red-500"}`}&gt;
+                        {report.followers.change &gt;= 0 ? &lt;TrendingUp size={14}/&gt; : &lt;TrendingDown size={14}/&gt;}
+                        {report.followers.change &gt;= 0 ? "+" : ""}{report.followers.changePercent}%
+                      &lt;/span&gt;
+                    )}
+                  &lt;/div&gt;
+                ) : (
+                  &lt;div className="flex items-center gap-1 text-gray-400 text-sm"&gt;
+                    &lt;Minus size={14}/&gt; Not enough history yet
+                  &lt;/div&gt;
+                )}
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          &lt;div&gt;
+            &lt;h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3"&gt;Performance vs last month&lt;/h2&gt;
+            &lt;div className="grid grid-cols-2 sm:grid-cols-4 gap-4"&gt;
+              &lt;StatCard label="Impressions"     current={cur!.metrics.impressions}    previous={prev!.metrics.impressions}    accent="blue"   /&gt;
+              &lt;StatCard label="Reach"           current={cur!.metrics.reach}          previous={prev!.metrics.reach}          accent="purple" /&gt;
+              &lt;StatCard label="Engagement rate" current={cur!.metrics.engagementRate} previous={prev!.metrics.engagementRate} accent="green"
+                format={(v) =&gt; `${v}%`} /&gt;
+              &lt;StatCard label="Likes"           current={cur!.metrics.likes}          previous={prev!.metrics.likes}          accent="pink"   /&gt;
+              &lt;StatCard label="Comments"        current={cur!.metrics.comments}       previous={prev!.metrics.comments}       accent="amber"  /&gt;
+              &lt;StatCard label="Shares"          current={cur!.metrics.shares}         previous={prev!.metrics.shares}         accent="indigo" /&gt;
+              &lt;StatCard label="Saves"           current={cur!.metrics.saves}          previous={prev!.metrics.saves}          accent="blue"   /&gt;
+              &lt;StatCard label="Clicks"          current={cur!.metrics.clicks}         previous={prev!.metrics.clicks}         accent="purple" /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          {report.chartData.length &gt; 0 &amp;&amp; (
+            &lt;div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5"&gt;
+              &lt;h2 className="text-sm font-semibold text-gray-700 mb-4"&gt;Daily performance — {MONTH_NAMES[report.period.month - 1]}&lt;/h2&gt;
+              &lt;ResponsiveContainer width="100%" height={240}&gt;
+                &lt;BarChart data={report.chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}&gt;
+                  &lt;XAxis dataKey="date" tickFormatter={(d) =&gt; format(new Date(d), "d MMM")} tick={{ fontSize: 11 }} /&gt;
+                  &lt;YAxis tick={{ fontSize: 11 }} /&gt;
+                  &lt;Tooltip labelFormatter={(d) =&gt; format(new Date(d as string), "d MMM yyyy")} /&gt;
+                  &lt;Legend /&gt;
+                  &lt;Bar dataKey="impressions" name="Impressions" fill="#3b82f6" radius={[3,3,0,0]} /&gt;
+                  &lt;Bar dataKey="reach"       name="Reach"       fill="#8b5cf6" radius={[3,3,0,0]} /&gt;
+                  &lt;Bar dataKey="likes"       name="Likes"       fill="#ec4899" radius={[3,3,0,0]} /&gt;
+                &lt;/BarChart&gt;
+              &lt;/ResponsiveContainer&gt;
+            &lt;/div&gt;
+          )}
+
+          {report.topPosts.length &gt; 0 &amp;&amp; (
+            &lt;div&gt;
+              &lt;h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3"&gt;Top 5 best performing posts&lt;/h2&gt;
+              &lt;div className="space-y-3"&gt;
+                {report.topPosts.map((post, i) =&gt; (
+                  &lt;div key={post.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex gap-4 items-start"&gt;
+                    &lt;div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      i === 0 ? "bg-yellow-100 text-yellow-700" :
+                      i === 1 ? "bg-gray-100 text-gray-600" :
+                      i === 2 ? "bg-orange-100 text-orange-600" : "bg-gray-50 text-gray-400"
+                    }`}&gt;{i + 1}&lt;/div&gt;
+                    {post.mediaUrl &amp;&amp; (
+                      &lt;img src={post.mediaUrl} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0" /&gt;
+                    )}
+                    &lt;div className="flex-1 min-w-0"&gt;
+                      &lt;div className="flex items-center gap-2 mb-1"&gt;
+                        &lt;span className="text-xs font-semibold text-gray-500 uppercase"&gt;{post.mediaType}&lt;/span&gt;
+                        {post.publishedAt &amp;&amp; (
+                          &lt;span className="text-xs text-gray-400"&gt;{format(new Date(post.publishedAt), "d MMM yyyy")}&lt;/span&gt;
+                        )}
+                      &lt;/div&gt;
+                      &lt;p className="text-sm text-gray-700 line-clamp-2"&gt;{post.caption}&lt;/p&gt;
+                    &lt;/div&gt;
+                    &lt;div className="grid grid-cols-3 gap-x-4 gap-y-1 shrink-0 text-right"&gt;
+                      {[
+                        { label: "Impressions", value: post.impressions },
+                        { label: "Reach",       value: post.reach },
+                        { label: "Likes",       value: post.likes },
+                        { label: "Comments",    value: post.comments },
+                        { label: "Shares",      value: post.shares },
+                        { label: "Saves",       value: post.saves },
+                      ].map(({ label, value }) =&gt; (
+                        &lt;div key={label}&gt;
+                          &lt;p className="text-xs text-gray-400"&gt;{label}&lt;/p&gt;
+                          &lt;p className="text-sm font-semibold text-gray-900"&gt;{value.toLocaleString()}&lt;/p&gt;
+                        &lt;/div&gt;
+                      ))}
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                ))}
+              &lt;/div&gt;
+            &lt;/div&gt;
+          )}
+
+          {report.topPosts.length === 0 &amp;&amp; cur!.breakdown.total === 0 &amp;&amp; (
+            &lt;div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center"&gt;
+              &lt;p className="text-sm font-medium text-amber-800"&gt;No data yet for this property&lt;/p&gt;
+              &lt;p className="text-sm text-amber-600 mt-1"&gt;Click &lt;strong&gt;Refresh&lt;/strong&gt; to pull metrics from Instagram.&lt;/p&gt;
+            &lt;/div&gt;
+          )}
+
+          &lt;div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-500"&gt;
+            &lt;strong className="text-gray-700"&gt;Note on Highlights:&lt;/strong&gt; Instagram's API does not expose Highlights data — whether they've been changed can only be checked manually on the Instagram app.
+          &lt;/div&gt;
+        &lt;/&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/(dashboard)/properties/page.tsx</span>
+        <span class="file-tag tag-updated">UPDATED — sortable cards, inline target editing</span>
+      </div>
+      <pre>"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { RefreshCw, Search, Building2, CheckCircle2, AlertCircle, Clock, ChevronRight } from "lucide-react";
+import { AccountStatus, STATUS_CONFIG } from "@/lib/accountStatus";
+import { formatDistanceToNow } from "date-fns";
+
+interface PropertySummary {
+  id: string;
+  pageName: string;
+  username: string | null;
+  followers: number;
+  monthlyPostTarget: number;
+  cachedMonthTotal: number;
+  cachedMissedDays: number;
+  cachedTodayPosted: number;
+  cachedScheduled: number;
+  cachedSyncMonth: number | null;
+  cachedSyncYear: number | null;
+  lastSyncAt: string | null;
+  status: AccountStatus;
+}
+
+const STATUS_ORDER: AccountStatus[] = ["red", "amber", "green", "blue"];
+
+export default function PropertiesPage() {
+  const router = useRouter();
+  const [properties, setProperties] = useState&lt;PropertySummary[]&gt;([]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState&lt;AccountStatus | "all"&gt;("all");
+  const [syncing, setSyncing] = useState(false);
+  const [editingTarget, setEditingTarget] = useState&lt;{ id: string; value: number } | null&gt;(null);
+
+  const load = useCallback(async () =&gt; {
+    const res = await fetch("/api/properties");
+    const data = await res.json();
+    data.sort((a: PropertySummary, b: PropertySummary) =&gt; {
+      const oi = STATUS_ORDER.indexOf(a.status);
+      const oj = STATUS_ORDER.indexOf(b.status);
+      if (oi !== oj) return oi - oj;
+      return a.pageName.localeCompare(b.pageName);
+    });
+    setProperties(data);
+  }, []);
+
+  useEffect(() =&gt; { load(); }, [load]);
+
+  async function handleSyncAll() {
+    setSyncing(true);
+    try {
+      await fetch("/api/properties/sync", { method: "POST" });
+      await load();
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function saveTarget(id: string, value: number) {
+    await fetch(`/api/properties/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ monthlyPostTarget: value }),
+    });
+    setProperties((prev) =&gt;
+      prev.map((p) =&gt; (p.id === id ? { ...p, monthlyPostTarget: value } : p))
+    );
+    setEditingTarget(null);
+  }
+
+  const filtered = properties.filter((p) =&gt; {
+    const matchSearch =
+      p.pageName.toLowerCase().includes(search.toLowerCase()) ||
+      (p.username ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "all" || p.status === filter;
+    return matchSearch &amp;&amp; matchFilter;
+  });
+
+  const counts = {
+    red:   properties.filter((p) =&gt; p.status === "red").length,
+    amber: properties.filter((p) =&gt; p.status === "amber").length,
+    green: properties.filter((p) =&gt; p.status === "green").length,
+    blue:  properties.filter((p) =&gt; p.status === "blue").length,
+  };
+
+  return (
+    &lt;div className="p-6 max-w-7xl mx-auto space-y-5"&gt;
+      &lt;div className="flex items-center justify-between flex-wrap gap-3"&gt;
+        &lt;div&gt;
+          &lt;h1 className="text-2xl font-bold text-gray-900"&gt;All Properties&lt;/h1&gt;
+          &lt;p className="text-sm text-gray-500 mt-0.5"&gt;{properties.length} hotel accounts&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;button
+          onClick={handleSyncAll}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        &gt;
+          &lt;RefreshCw size={15} className={syncing ? "animate-spin" : ""} /&gt;
+          {syncing ? "Syncing all…" : "Refresh All"}
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div className="flex items-center gap-2 flex-wrap"&gt;
+        &lt;button
+          onClick={() =&gt; setFilter("all")}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            filter === "all" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+          }`}
+        &gt;
+          All ({properties.length})
+        &lt;/button&gt;
+        {(["red", "amber", "green", "blue"] as const).map((s) =&gt; {
+          const cfg = STATUS_CONFIG[s];
+          return (
+            &lt;button
+              key={s}
+              onClick={() =&gt; setFilter(s)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                filter === s ? `${cfg.bg} ${cfg.border} ${cfg.text}` : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+              }`}
+            &gt;
+              {cfg.label} ({counts[s]})
+            &lt;/button&gt;
+          );
+        })}
+        &lt;div className="ml-auto flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5"&gt;
+          &lt;Search size={14} className="text-gray-400" /&gt;
+          &lt;input
+            type="text"
+            placeholder="Search properties…"
+            value={search}
+            onChange={(e) =&gt; setSearch(e.target.value)}
+            className="text-sm outline-none w-44"
+          /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      {counts.red &gt; 0 &amp;&amp; (
+        &lt;div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700"&gt;
+          &lt;AlertCircle size={16} /&gt;
+          &lt;strong&gt;{counts.red} {counts.red === 1 ? "property needs" : "properties need"} attention&lt;/strong&gt;
+          {" "}— missed posts or today's post not done
+        &lt;/div&gt;
+      )}
+
+      {filtered.length === 0 ? (
+        &lt;div className="text-center py-16 text-gray-400"&gt;
+          &lt;Building2 size={40} className="mx-auto mb-3 opacity-30" /&gt;
+          &lt;p&gt;No properties found&lt;/p&gt;
+        &lt;/div&gt;
+      ) : (
+        &lt;div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"&gt;
+          {filtered.map((p) =&gt; {
+            const cfg = STATUS_CONFIG[p.status];
+            const pct = p.monthlyPostTarget &gt; 0 ? Math.min(p.cachedMonthTotal / p.monthlyPostTarget, 1) : 0;
+            const isEditing = editingTarget?.id === p.id;
+
+            return (
+              &lt;div
+                key={p.id}
+                className={`bg-white rounded-xl border-2 ${cfg.border} shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden`}
+                onClick={() =&gt; router.push(`/monitor?accountId=${p.id}`)}
+              &gt;
+                &lt;div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                  p.status === "red" ? "bg-red-400" :
+                  p.status === "amber" ? "bg-amber-400" :
+                  p.status === "green" ? "bg-green-400" : "bg-blue-400"
+                }`} /&gt;
+                &lt;div className="pl-4 pr-4 pt-4 pb-3"&gt;
+                  &lt;div className="flex items-start justify-between gap-2 mb-0.5"&gt;
+                    &lt;div className="min-w-0"&gt;
+                      &lt;p className="font-semibold text-gray-900 text-sm leading-tight truncate"&gt;{p.pageName}&lt;/p&gt;
+                      {p.username &amp;&amp; &lt;p className="text-xs text-gray-400 mt-0.5"&gt;@{p.username}&lt;/p&gt;}
+                    &lt;/div&gt;
+                    &lt;span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}&gt;
+                      {cfg.label}
+                    &lt;/span&gt;
+                  &lt;/div&gt;
+                  &lt;div className="flex items-center gap-1.5 mt-2 mb-3"&gt;
+                    {p.cachedTodayPosted &gt; 0 ? (
+                      &lt;CheckCircle2 size={14} className="text-green-500 shrink-0" /&gt;
+                    ) : (
+                      &lt;AlertCircle size={14} className="text-red-400 shrink-0" /&gt;
+                    )}
+                    &lt;span className="text-xs text-gray-600"&gt;
+                      {p.cachedTodayPosted &gt; 0 ? "Today's post done" : "No post today yet"}
+                    &lt;/span&gt;
+                    {p.cachedScheduled &gt; 0 &amp;&amp; (
+                      &lt;span className="ml-auto text-xs text-blue-500 flex items-center gap-0.5"&gt;
+                        &lt;Clock size={11} /&gt; {p.cachedScheduled} scheduled
+                      &lt;/span&gt;
+                    )}
+                  &lt;/div&gt;
+                  &lt;div className="mb-1.5"&gt;
+                    &lt;div className="flex items-center justify-between mb-1"&gt;
+                      &lt;span className="text-xs text-gray-500"&gt;Posts this month&lt;/span&gt;
+                      &lt;div
+                        className="flex items-center gap-1"
+                        onClick={(e) =&gt; { e.stopPropagation(); setEditingTarget({ id: p.id, value: p.monthlyPostTarget }); }}
+                      &gt;
+                        &lt;span className="text-xs font-semibold text-gray-900"&gt;{p.cachedMonthTotal}&lt;/span&gt;
+                        &lt;span className="text-xs text-gray-400"&gt;/&lt;/span&gt;
+                        {isEditing ? (
+                          &lt;input
+                            type="number"
+                            value={editingTarget!.value}
+                            onChange={(e) =&gt; setEditingTarget({ id: p.id, value: parseInt(e.target.value) || 0 })}
+                            onBlur={() =&gt; saveTarget(p.id, editingTarget!.value)}
+                            onKeyDown={(e) =&gt; { if (e.key === "Enter") saveTarget(p.id, editingTarget!.value); if (e.key === "Escape") setEditingTarget(null); }}
+                            className="w-10 text-xs border border-blue-400 rounded px-1 text-center outline-none"
+                            autoFocus
+                            min={1}
+                            onClick={(e) =&gt; e.stopPropagation()}
+                          /&gt;
+                        ) : (
+                          &lt;span className="text-xs text-gray-400 underline decoration-dotted cursor-pointer hover:text-blue-600"&gt;
+                            {p.monthlyPostTarget}
+                          &lt;/span&gt;
+                        )}
+                      &lt;/div&gt;
+                    &lt;/div&gt;
+                    &lt;div className="h-1.5 bg-gray-100 rounded-full overflow-hidden"&gt;
+                      &lt;div
+                        className={`h-full rounded-full transition-all ${
+                          p.status === "blue" ? "bg-blue-500" :
+                          p.status === "green" ? "bg-green-500" :
+                          p.status === "amber" ? "bg-amber-500" : "bg-red-400"
+                        }`}
+                        style={{ width: `${pct * 100}%` }}
+                      /&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div className="flex items-center justify-between mt-2"&gt;
+                    {p.cachedMissedDays &gt; 0 ? (
+                      &lt;span className="text-xs font-medium text-red-600"&gt;
+                        {p.cachedMissedDays} day{p.cachedMissedDays &gt; 1 ? "s" : ""} missed
+                      &lt;/span&gt;
+                    ) : (
+                      &lt;span className="text-xs text-gray-400"&gt;No missed days&lt;/span&gt;
+                    )}
+                    &lt;div className="flex items-center gap-1 text-gray-300"&gt;
+                      &lt;span className="text-xs"&gt;
+                        {p.lastSyncAt ? formatDistanceToNow(new Date(p.lastSyncAt), { addSuffix: true }) : "Never synced"}
+                      &lt;/span&gt;
+                      &lt;ChevronRight size={13} /&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            );
+          })}
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/(dashboard)/monitor/page.tsx</span>
+        <span class="file-tag tag-updated">UPDATED — day-by-day calendar with Back to Properties link</span>
+      </div>
+      <pre>"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Calendar, AlertCircle, ArrowLeft } from "lucide-react";
+import { format, addMonths, subMonths } from "date-fns";
+import Link from "next/link";
+import { Account } from "@/types";
+
+interface DayData {
+  day: number;
+  date: string;
+  isToday: boolean;
+  status: "published" | "scheduled" | "missed" | "today-done" | "today-pending" | "future";
+  publishedCount: number;
+  scheduledCount: number;
+  posts: { id: string; time: string; type: string; permalink: string; caption?: string; thumbnail?: string }[];
+  scheduled: { id: string; time: string | null; caption?: string; status: string }[];
+}
+
+interface MonitorData {
+  account: { username: string; profilePicture?: string; followers: number };
+  summary: { monthTotal: number; todayPosted: number; missedDays: number; scheduledTotal: number; month: number; year: number };
+  days: DayData[];
+}
+
+const STATUS_STYLE: Record&lt;DayData["status"], { bg: string; border: string; dot: string; label: string }&gt; = {
+  "today-done":    { bg: "bg-green-50",  border: "border-green-400", dot: "bg-green-500",  label: "Posted today" },
+  "today-pending": { bg: "bg-amber-50",  border: "border-amber-400", dot: "bg-amber-500",  label: "Not posted yet" },
+  published:       { bg: "bg-green-50",  border: "border-green-200", dot: "bg-green-400",  label: "Posted" },
+  missed:          { bg: "bg-red-50",    border: "border-red-200",   dot: "bg-red-400",    label: "Missed" },
+  scheduled:       { bg: "bg-blue-50",   border: "border-blue-200",  dot: "bg-blue-400",   label: "Scheduled" },
+  future:          { bg: "bg-gray-50",   border: "border-gray-200",  dot: "bg-gray-300",   label: "No post" },
+};
+
+export default function MonitorPage() {
+  const searchParams = useSearchParams();
+  const preselectedId = searchParams.get("accountId") ?? "";
+
+  const [accounts, setAccounts] = useState&lt;Account[]&gt;([]);
+  const [selectedId, setSelectedId] = useState&lt;string&gt;(preselectedId);
+  const [month, setMonth] = useState(new Date());
+  const [data, setData] = useState&lt;MonitorData | null&gt;(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedDay, setSelectedDay] = useState&lt;DayData | null&gt;(null);
+  const [error, setError] = useState("");
+
+  useEffect(() =&gt; {
+    fetch("/api/accounts")
+      .then((r) =&gt; r.json())
+      .then((list: Account[]) =&gt; {
+        const igAccounts = list.filter((a) =&gt; a.instagramId);
+        setAccounts(igAccounts);
+        if (!preselectedId &amp;&amp; igAccounts.length &gt; 0) setSelectedId(igAccounts[0].id);
+      });
+  }, [preselectedId]);
+
+  const load = useCallback(async () =&gt; {
+    if (!selectedId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/instagram/monitor?accountId=${selectedId}&amp;year=${month.getFullYear()}&amp;month=${month.getMonth() + 1}`
+      );
+      if (!res.ok) throw new Error((await res.json()).error);
+      setData(await res.json());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedId, month]);
+
+  useEffect(() =&gt; { load(); }, [load]);
+
+  const today = data?.days.find((d) =&gt; d.isToday);
+
+  return (
+    &lt;div className="p-6 max-w-5xl mx-auto space-y-6"&gt;
+      {preselectedId &amp;&amp; (
+        &lt;Link href="/properties" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"&gt;
+          &lt;ArrowLeft size={14} /&gt; Back to All Properties
+        &lt;/Link&gt;
+      )}
+
+      &lt;div className="flex items-center justify-between flex-wrap gap-3"&gt;
+        &lt;div&gt;
+          &lt;h1 className="text-2xl font-bold text-gray-900"&gt;Post Monitor&lt;/h1&gt;
+          {data &amp;&amp; (
+            &lt;p className="text-sm text-gray-500 mt-0.5"&gt;
+              @{data.account.username} · {data.account.followers.toLocaleString()} followers
+            &lt;/p&gt;
+          )}
+        &lt;/div&gt;
+        &lt;div className="flex items-center gap-3"&gt;
+          {accounts.length &gt; 1 &amp;&amp; (
+            &lt;select
+              value={selectedId}
+              onChange={(e) =&gt; setSelectedId(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            &gt;
+              {accounts.map((a) =&gt; (
+                &lt;option key={a.id} value={a.id}&gt;{a.pageName}&lt;/option&gt;
+              ))}
+            &lt;/select&gt;
+          )}
+          &lt;div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2"&gt;
+            &lt;button onClick={() =&gt; setMonth(subMonths(month, 1))} className="hover:text-blue-600"&gt;
+              &lt;ChevronLeft size={18} /&gt;
+            &lt;/button&gt;
+            &lt;span className="text-sm font-medium w-28 text-center"&gt;{format(month, "MMMM yyyy")}&lt;/span&gt;
+            &lt;button onClick={() =&gt; setMonth(addMonths(month, 1))} className="hover:text-blue-600"&gt;
+              &lt;ChevronRight size={18} /&gt;
+            &lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      {error &amp;&amp; (
+        &lt;div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700"&gt;
+          &lt;AlertCircle size={16} /&gt; {error}
+        &lt;/div&gt;
+      )}
+
+      {!selectedId &amp;&amp; !loading &amp;&amp; (
+        &lt;div className="text-center py-16 text-gray-400"&gt;
+          &lt;Calendar size={40} className="mx-auto mb-3 opacity-40" /&gt;
+          &lt;p className="font-medium"&gt;No Instagram accounts connected&lt;/p&gt;
+          &lt;p className="text-sm mt-1"&gt;Go to &lt;strong&gt;Accounts&lt;/strong&gt; in the sidebar to connect one.&lt;/p&gt;
+        &lt;/div&gt;
+      )}
+
+      {loading &amp;&amp; &lt;div className="text-center py-16 text-gray-400 text-sm"&gt;Loading…&lt;/div&gt;}
+
+      {data &amp;&amp; !loading &amp;&amp; (
+        &lt;&gt;
+          {today &amp;&amp; (
+            &lt;div className={`rounded-2xl border-2 p-5 flex items-center gap-5 ${
+              today.status === "today-done" ? "bg-green-50 border-green-400" : "bg-amber-50 border-amber-400"
+            }`}&gt;
+              {today.status === "today-done" ? (
+                &lt;CheckCircle2 size={40} className="text-green-500 shrink-0" /&gt;
+              ) : (
+                &lt;XCircle size={40} className="text-amber-500 shrink-0" /&gt;
+              )}
+              &lt;div&gt;
+                &lt;p className="text-lg font-bold text-gray-900"&gt;
+                  {today.status === "today-done" ? "Today's post is done ✓" : "No post published today yet"}
+                &lt;/p&gt;
+                &lt;p className="text-sm text-gray-600 mt-0.5"&gt;
+                  {today.status === "today-done"
+                    ? `${today.publishedCount} post${today.publishedCount &gt; 1 ? "s" : ""} published today · ${today.posts[0]?.time}`
+                    : today.scheduledCount &gt; 0
+                    ? `${today.scheduledCount} post${today.scheduledCount &gt; 1 ? "s" : ""} scheduled for later today`
+                    : "Nothing scheduled for today"}
+                &lt;/p&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          )}
+
+          &lt;div className="grid grid-cols-2 sm:grid-cols-4 gap-4"&gt;
+            {[
+              { label: "Posts this month", value: data.summary.monthTotal,    color: "text-blue-600" },
+              { label: "Missed days",      value: data.summary.missedDays,    color: "text-red-500" },
+              { label: "Scheduled ahead",  value: data.summary.scheduledTotal, color: "text-indigo-600" },
+              { label: "Today posted",     value: data.summary.todayPosted,   color: data.summary.todayPosted &gt; 0 ? "text-green-600" : "text-amber-500" },
+            ].map(({ label, value, color }) =&gt; (
+              &lt;div key={label} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4"&gt;
+                &lt;p className="text-xs text-gray-500 font-medium"&gt;{label}&lt;/p&gt;
+                &lt;p className={`text-3xl font-bold mt-1 ${color}`}&gt;{value}&lt;/p&gt;
+              &lt;/div&gt;
+            ))}
+          &lt;/div&gt;
+
+          &lt;div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"&gt;
+            &lt;div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"&gt;
+              &lt;h2 className="text-sm font-semibold text-gray-700"&gt;Day-by-day status&lt;/h2&gt;
+              &lt;div className="flex items-center gap-3 text-xs text-gray-500"&gt;
+                {(["today-done", "published", "missed", "scheduled", "future"] as const).map((s) =&gt; (
+                  &lt;span key={s} className="flex items-center gap-1"&gt;
+                    &lt;span className={`w-2 h-2 rounded-full ${STATUS_STYLE[s].dot}`} /&gt;
+                    {STATUS_STYLE[s].label}
+                  &lt;/span&gt;
+                ))}
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div className="grid grid-cols-7 gap-px bg-gray-100"&gt;
+              {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) =&gt; (
+                &lt;div key={d} className="bg-white py-2 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide"&gt;{d}&lt;/div&gt;
+              ))}
+              {(() =&gt; {
+                const firstDow = (new Date(data.summary.year, data.summary.month - 1, 1).getDay() + 6) % 7;
+                return Array.from({ length: firstDow }, (_, i) =&gt; &lt;div key={`pad-${i}`} className="bg-gray-50" /&gt;);
+              })()}
+              {data.days.map((d) =&gt; {
+                const style = STATUS_STYLE[d.status];
+                return (
+                  &lt;button
+                    key={d.day}
+                    onClick={() =&gt; setSelectedDay(d)}
+                    className={`${style.bg} border ${style.border} ${d.isToday ? "ring-2 ring-offset-1 ring-blue-400" : ""} p-2 min-h-[72px] text-left hover:opacity-80 transition-opacity relative`}
+                  &gt;
+                    &lt;span className={`text-xs font-bold ${d.isToday ? "text-blue-600" : "text-gray-700"}`}&gt;{d.day}&lt;/span&gt;
+                    &lt;span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${style.dot}`} /&gt;
+                    {d.publishedCount &gt; 0 &amp;&amp; &lt;p className="text-xs text-gray-600 mt-1"&gt;{d.publishedCount} post{d.publishedCount &gt; 1 ? "s" : ""}&lt;/p&gt;}
+                    {d.scheduledCount &gt; 0 &amp;&amp; d.publishedCount === 0 &amp;&amp; (
+                      &lt;p className="text-xs text-blue-500 mt-1 flex items-center gap-0.5"&gt;&lt;Clock size={10}/&gt; {d.scheduledCount} sched.&lt;/p&gt;
+                    )}
+                  &lt;/button&gt;
+                );
+              })}
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/&gt;
+      )}
+
+      {selectedDay &amp;&amp; (
+        &lt;div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4" onClick={() =&gt; setSelectedDay(null)}&gt;
+          &lt;div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={(e) =&gt; e.stopPropagation()}&gt;
+            &lt;div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"&gt;
+              &lt;div&gt;
+                &lt;h3 className="font-semibold text-gray-900"&gt;{format(new Date(selectedDay.date), "EEEE, MMMM d")}&lt;/h3&gt;
+                &lt;p className="text-xs mt-0.5 font-medium text-gray-500"&gt;{STATUS_STYLE[selectedDay.status].label}&lt;/p&gt;
+              &lt;/div&gt;
+              &lt;button onClick={() =&gt; setSelectedDay(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none"&gt;×&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div className="p-5 space-y-4"&gt;
+              {selectedDay.posts.length &gt; 0 &amp;&amp; (
+                &lt;div&gt;
+                  &lt;p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"&gt;Published&lt;/p&gt;
+                  {selectedDay.posts.map((p) =&gt; (
+                    &lt;a key={p.id} href={p.permalink} target="_blank" rel="noopener noreferrer"
+                      className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors mb-2"&gt;
+                      {p.thumbnail &amp;&amp; &lt;img src={p.thumbnail} alt="" className="w-12 h-12 object-cover rounded-md shrink-0" /&gt;}
+                      &lt;div className="min-w-0"&gt;
+                        &lt;p className="text-xs text-gray-500"&gt;{p.time} · {p.type}&lt;/p&gt;
+                        {p.caption &amp;&amp; &lt;p className="text-sm text-gray-700 mt-0.5 line-clamp-2"&gt;{p.caption}&lt;/p&gt;}
+                      &lt;/div&gt;
+                    &lt;/a&gt;
+                  ))}
+                &lt;/div&gt;
+              )}
+              {selectedDay.scheduled.length &gt; 0 &amp;&amp; (
+                &lt;div&gt;
+                  &lt;p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"&gt;Scheduled&lt;/p&gt;
+                  {selectedDay.scheduled.map((p) =&gt; (
+                    &lt;div key={p.id} className="p-3 rounded-lg border border-blue-200 bg-blue-50 mb-2"&gt;
+                      &lt;p className="text-xs text-blue-500"&gt;{p.time} · {p.status}&lt;/p&gt;
+                      {p.caption &amp;&amp; &lt;p className="text-sm text-gray-700 mt-0.5 line-clamp-2"&gt;{p.caption}&lt;/p&gt;}
+                    &lt;/div&gt;
+                  ))}
+                &lt;/div&gt;
+              )}
+              {selectedDay.posts.length === 0 &amp;&amp; selectedDay.scheduled.length === 0 &amp;&amp; (
+                &lt;p className="text-sm text-gray-400 text-center py-4"&gt;No posts for this day.&lt;/p&gt;
+              )}
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/(dashboard)/calendar/page.tsx</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { format, addMonths, subMonths } from "date-fns";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { CalendarGrid } from "@/components/calendar/CalendarGrid";
+import { PostForm, PostPayload } from "@/components/posts/PostForm";
+import { Account, Post } from "@/types";
+
+export default function CalendarPage() {
+  const [month, setMonth] = useState(new Date());
+  const [posts, setPosts] = useState&lt;Post[]&gt;([]);
+  const [accounts, setAccounts] = useState&lt;Account[]&gt;([]);
+  const [showForm, setShowForm] = useState(false);
+  const [selectedPost, setSelectedPost] = useState&lt;Post | null&gt;(null);
+  const [prefillDate, setPrefillDate] = useState&lt;string | null&gt;(null);
+
+  const monthKey = format(month, "yyyy-MM");
+
+  const loadData = useCallback(async () =&gt; {
+    const [postsRes, accountsRes] = await Promise.all([
+      fetch(`/api/posts?month=${monthKey}`),
+      fetch("/api/accounts"),
+    ]);
+    setPosts(await postsRes.json());
+    setAccounts(await accountsRes.json());
+  }, [monthKey]);
+
+  useEffect(() =&gt; { loadData(); }, [loadData]);
+
+  async function handleSave(data: PostPayload) {
+    if (selectedPost) {
+      await fetch(`/api/posts/${selectedPost.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } else {
+      await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    }
+    setShowForm(false);
+    setSelectedPost(null);
+    loadData();
+  }
+
+  async function handlePublishNow(postId: string) {
+    await fetch("/api/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId }),
+    });
+    loadData();
+  }
+
+  async function handleDelete(postId: string) {
+    await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+    setSelectedPost(null);
+    loadData();
+  }
+
+  return (
+    &lt;div className="p-6 max-w-7xl mx-auto"&gt;
+      &lt;div className="flex items-center justify-between mb-6"&gt;
+        &lt;div className="flex items-center gap-4"&gt;
+          &lt;h1 className="text-2xl font-bold text-gray-900"&gt;Content Calendar&lt;/h1&gt;
+          &lt;div className="flex items-center gap-2"&gt;
+            &lt;button onClick={() =&gt; setMonth(subMonths(month, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg"&gt;&lt;ChevronLeft size={18} /&gt;&lt;/button&gt;
+            &lt;span className="text-base font-medium w-36 text-center"&gt;{format(month, "MMMM yyyy")}&lt;/span&gt;
+            &lt;button onClick={() =&gt; setMonth(addMonths(month, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg"&gt;&lt;ChevronRight size={18} /&gt;&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button
+          onClick={() =&gt; { setSelectedPost(null); setPrefillDate(null); setShowForm(true); }}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+        &gt;
+          &lt;Plus size={16} /&gt; New Post
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;CalendarGrid
+        month={month}
+        posts={posts}
+        onDayClick={(date) =&gt; { setPrefillDate(format(date, "yyyy-MM-dd'T'09:00")); setSelectedPost(null); setShowForm(true); }}
+        onPostClick={(post) =&gt; setSelectedPost(post)}
+      /&gt;
+
+      {showForm &amp;&amp; (
+        &lt;div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"&gt;
+          &lt;div className="bg-white rounded-2xl shadow-xl w-full max-w-lg"&gt;
+            &lt;div className="flex items-center justify-between px-6 py-4 border-b border-gray-200"&gt;
+              &lt;h2 className="text-base font-semibold"&gt;{selectedPost ? "Edit Post" : "New Post"}&lt;/h2&gt;
+              &lt;button onClick={() =&gt; setShowForm(false)} className="p-1 hover:bg-gray-100 rounded-full"&gt;&lt;X size={18} /&gt;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div className="p-6"&gt;
+              &lt;PostForm
+                accounts={accounts}
+                initial={selectedPost ?? (prefillDate ? { scheduledAt: prefillDate } : undefined)}
+                onSave={handleSave}
+                onCancel={() =&gt; setShowForm(false)}
+              /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      )}
+
+      {selectedPost &amp;&amp; !showForm &amp;&amp; (
+        &lt;div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"&gt;
+          &lt;div className="bg-white rounded-2xl shadow-xl w-full max-w-md"&gt;
+            &lt;div className="flex items-center justify-between px-6 py-4 border-b border-gray-200"&gt;
+              &lt;h2 className="text-base font-semibold"&gt;Post Details&lt;/h2&gt;
+              &lt;button onClick={() =&gt; setSelectedPost(null)} className="p-1 hover:bg-gray-100 rounded-full"&gt;&lt;X size={18} /&gt;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div className="p-6 space-y-3"&gt;
+              &lt;p className="text-sm text-gray-700"&gt;{selectedPost.caption}&lt;/p&gt;
+              &lt;p className="text-xs text-gray-500"&gt;
+                {selectedPost.scheduledAt ? `Scheduled: ${format(new Date(selectedPost.scheduledAt), "PPp")}` : "No schedule set"}
+              &lt;/p&gt;
+              &lt;div className="flex gap-2 pt-2"&gt;
+                &lt;button onClick={() =&gt; setShowForm(true)} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"&gt;Edit&lt;/button&gt;
+                {selectedPost.status !== "PUBLISHED" &amp;&amp; (
+                  &lt;button onClick={() =&gt; handlePublishNow(selectedPost.id)} className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"&gt;Publish Now&lt;/button&gt;
+                )}
+                &lt;button onClick={() =&gt; handleDelete(selectedPost.id)} className="px-3 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"&gt;Delete&lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/app/(dashboard)/accounts/page.tsx</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>"use client";
+
+import { useState, useEffect } from "react";
+import { Account } from "@/types";
+import { PlatformBadge } from "@/components/ui/Badge";
+import { format } from "date-fns";
+
+export default function AccountsPage() {
+  const [accounts, setAccounts] = useState&lt;Account[]&gt;([]);
+  const [token, setToken] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() =&gt; {
+    fetch("/api/accounts").then((r) =&gt; r.json()).then(setAccounts);
+  }, []);
+
+  async function handleConnect(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shortToken: token }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error ?? "Failed to connect");
+      }
+      const created: Account[] = await res.json();
+      setAccounts((prev) =&gt; {
+        const ids = new Set(created.map((a) =&gt; a.id));
+        return [...prev.filter((a) =&gt; !ids.has(a.id)), ...created];
+      });
+      setToken("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  return (
+    &lt;div className="p-6 max-w-3xl mx-auto space-y-8"&gt;
+      &lt;h1 className="text-2xl font-bold text-gray-900"&gt;Connected Accounts&lt;/h1&gt;
+      &lt;div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6"&gt;
+        &lt;h2 className="text-base font-semibold mb-1"&gt;Connect a Meta Page&lt;/h2&gt;
+        &lt;p className="text-sm text-gray-500 mb-4"&gt;
+          Generate a short-lived User Access Token in Graph API Explorer with
+          &lt;code className="bg-gray-100 px-1 rounded text-xs"&gt;pages_manage_posts&lt;/code&gt;,
+          &lt;code className="bg-gray-100 px-1 rounded text-xs"&gt;pages_read_engagement&lt;/code&gt;, and
+          &lt;code className="bg-gray-100 px-1 rounded text-xs"&gt;instagram_basic&lt;/code&gt; permissions, then paste it below.
+        &lt;/p&gt;
+        &lt;form onSubmit={handleConnect} className="flex gap-3"&gt;
+          &lt;input
+            type="text"
+            value={token}
+            onChange={(e) =&gt; setToken(e.target.value)}
+            placeholder="EAAxxxxx…"
+            required
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          /&gt;
+          &lt;button type="submit" disabled={connecting}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"&gt;
+            {connecting ? "Connecting…" : "Connect"}
+          &lt;/button&gt;
+        &lt;/form&gt;
+        {error &amp;&amp; &lt;p className="mt-2 text-sm text-red-600"&gt;{error}&lt;/p&gt;}
+      &lt;/div&gt;
+      &lt;div className="space-y-3"&gt;
+        {accounts.map((account) =&gt; (
+          &lt;div key={account.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-4"&gt;
+            &lt;PlatformBadge platform={account.platform} /&gt;
+            &lt;div className="flex-1 min-w-0"&gt;
+              &lt;p className="text-sm font-semibold text-gray-900"&gt;{account.pageName}&lt;/p&gt;
+              &lt;p className="text-xs text-gray-500"&gt;Page ID: {account.pageId}{account.instagramId &amp;&amp; ` · IG: ${account.instagramId}`}&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;div className="text-right text-xs text-gray-400"&gt;
+              {account.tokenExpiresAt ? `Token expires ${format(new Date(account.tokenExpiresAt), "MMM d, yyyy")}` : "No expiry"}
+            &lt;/div&gt;
+          &lt;/div&gt;
+        ))}
+        {accounts.length === 0 &amp;&amp; &lt;p className="text-center text-sm text-gray-400 py-8"&gt;No accounts connected yet.&lt;/p&gt;}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ COMPONENTS ══ -->
+  <div class="section">
+    <div class="section-title">Components</div>
+
+    <div class="file-block">
+      <div class="file-header">
+        <span class="file-path">src/components/ui/Badge.tsx</span>
+        <span class="file-tag tag-unchanged">unchanged</span>
+      </div>
+      <pre>import { PostStatus, Platform } from "@/types";
+
+const statusColors: Record&lt;PostStatus, string&gt; = {
+  DRAFT: "bg-gray-100 text-gray-700",
+  SCHEDULED: "bg-blue-100 text-blue-700",
+  PUBLISHED: "bg-green-100 text-green-700",
+  FAILED: "bg-red-100 text-red-700",
+};
+
+const platformColors: Record&lt;Platform, string&gt; = {
+  FACEBOOK: "bg-blue-600 text-white",
+  INSTAGRAM: "bg-gradient-to-r from-purple-500 to-pink-500 text-white",
+};
+
+export function StatusBadge({ status }: { status: PostStatus }) {
+  return (
+    &lt;span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColors[status]}`}&gt;
+      {status.charAt(0) + status.slice(1).toLowerCase()}
+    &lt;/span&gt;
+  );
+}
+
+export function PlatformBadge({ platform }: { platform: Platform }) {
+  return (
+    &lt;span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${platformColors[platform]}`}&gt;
+      {platform.charAt(0) + platform.slice(1).toLowerCase()}
+    &lt;/span&gt;
+  );
+}</pre>
+    </div>
+  </div>
+
+  <div style="margin-top:40px; padding:20px; background:#f0fdf4; border:2px solid #86efac; border-radius:10px; font-size:14px; color:#166534;">
+    <strong>Deployment checklist for developer:</strong>
+    <ol style="margin-top:8px; margin-left:20px; line-height:2;">
+      <li>Run the SQL in <code style="background:#dcfce7;padding:1px 6px;border-radius:4px;">prisma/migrations/20260615000000_.../migration.sql</code> on Neon SQL Editor</li>
+      <li>Replace all files above in your project with the versions shown here</li>
+      <li>Run <code style="background:#dcfce7;padding:1px 6px;border-radius:4px;">npx prisma generate</code></li>
+      <li>Push to Vercel / redeploy</li>
+      <li>Go to <strong>Analytics</strong> page → select a property → click <strong>Refresh</strong> to pull metrics</li>
+    </ol>
+  </div>
+
+</div>
+</body>
+</html>
