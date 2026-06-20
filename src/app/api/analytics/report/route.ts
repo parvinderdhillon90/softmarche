@@ -149,6 +149,7 @@ export async function GET(req: Request) {
       mediaType:   p.mediaType,
       publishedAt: p.publishedAt,
       mediaUrl:    p.mediaUrls[0] ?? null,
+      thumbnailUrl: p.thumbnailUrl ?? null,
       impressions: p.analytics?.impressions ?? 0,
       reach:       p.analytics?.reach ?? 0,
       likes:       p.analytics?.likes ?? 0,

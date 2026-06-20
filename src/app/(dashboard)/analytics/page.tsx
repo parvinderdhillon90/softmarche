@@ -13,7 +13,7 @@ interface MetricSet {
 interface Breakdown { total: number; reels: number; static: number; carousel: number; video: number; }
 interface TopPost {
   id: string; caption: string; mediaType: string; publishedAt: string | null;
-  mediaUrl: string | null; impressions: number; reach: number; likes: number;
+  mediaUrl: string | null; thumbnailUrl: string | null; impressions: number; reach: number; likes: number;
   comments: number; shares: number; saves: number;
 }
 interface Report {
@@ -69,6 +69,7 @@ export default function AnalyticsPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     fetch("/api/accounts").then((r) => r.json()).then((list: Account[]) => {
@@ -97,6 +98,19 @@ export default function AnalyticsPage() {
     const res = await fetch(`/api/analytics/report?accountId=${accountId}`);
     setReport(await res.json());
     setRefreshing(false);
+  }
+
+  async function handleImportHistory() {
+    if (!accountId) return;
+    setImporting(true);
+    await fetch("/api/analytics/import-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId }),
+    });
+    const res = await fetch(`/api/analytics/report?accountId=${accountId}`);
+    setReport(await res.json());
+    setImporting(false);
   }
 
   const cur  = report?.current;
@@ -133,6 +147,22 @@ export default function AnalyticsPage() {
             <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
             {refreshing ? "Refreshing…" : "Refresh"}
           </button>
+          <button
+            onClick={handleImportHistory}
+            disabled={importing || !accountId}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={importing ? "animate-spin" : ""} />
+            {importing ? "Importing…" : "Import History"}
+          </button>
+          <a
+            href={accountId ? `/api/analytics/pdf?accountId=${accountId}` : "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 ${!accountId ? "pointer-events-none opacity-50" : ""}`}
+          >
+            Download Report
+          </a>
         </div>
       </div>
 
@@ -261,8 +291,8 @@ export default function AnalyticsPage() {
                       {i + 1}
                     </div>
                     {/* Thumbnail */}
-                    {post.mediaUrl && (
-                      <img src={post.mediaUrl} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0" />
+                    {(post.thumbnailUrl ?? post.mediaUrl) && (
+                      <img src={post.thumbnailUrl ?? post.mediaUrl ?? ""} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0" />
                     )}
                     {/* Info */}
                     <div className="flex-1 min-w-0">

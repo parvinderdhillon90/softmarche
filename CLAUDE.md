@@ -27,6 +27,7 @@ npx prisma studio            # open Prisma Studio GUI
 | `META_APP_ID` | Meta developer app ID |
 | `META_APP_SECRET` | Meta developer app secret |
 | `CRON_SECRET` | Bearer token that secures `/api/cron` |
+| `ANTHROPIC_API_KEY` | Anthropic API key for AI-powered PDF report analysis |
 
 ## Architecture
 

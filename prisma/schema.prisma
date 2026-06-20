@@ -59,6 +59,7 @@ model Post {
   status      PostStatus @default(DRAFT)
   caption     String
   mediaUrls   String[]
+  thumbnailUrl String?
   mediaType   MediaType  @default(IMAGE)
   scheduledAt DateTime?
   publishedAt DateTime?

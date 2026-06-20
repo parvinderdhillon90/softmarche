@@ -65,7 +65,13 @@ async function syncOneAccount(
             mediaType: mapMediaType(item.media_type),
             publishedAt: new Date(item.timestamp),
             externalId: item.id,
+            thumbnailUrl: item.thumbnail_url ?? item.media_url ?? null,
           },
+        });
+      } else if (!existing.thumbnailUrl) {
+        await prisma.post.update({
+          where: { id: existing.id },
+          data: { thumbnailUrl: item.thumbnail_url ?? item.media_url ?? null },
         });
       }
     }
