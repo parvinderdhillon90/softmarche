@@ -17,3 +17,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  // Collect post IDs so we can delete their analytics first
+  const posts = await prisma.post.findMany({ where: { accountId: id }, select: { id: true } });
+  const postIds = posts.map((p) => p.id);
+
+  await prisma.$transaction([
+    prisma.analytics.deleteMany({ where: { postId: { in: postIds } } }),
+    prisma.post.deleteMany({ where: { accountId: id } }),
+    prisma.followerSnapshot.deleteMany({ where: { accountId: id } }),
+    prisma.accountSyncLog.deleteMany({ where: { accountId: id } }),
+    prisma.account.delete({ where: { id } }),
+  ]);
+
+  return NextResponse.json({ ok: true });
+}

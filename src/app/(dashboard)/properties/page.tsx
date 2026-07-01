@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw, Search, Building2, CheckCircle2, AlertCircle, Clock, ChevronRight } from "lucide-react";
+import { RefreshCw, Search, Building2, CheckCircle2, AlertCircle, Clock, ChevronRight, Trash2 } from "lucide-react";
 import { AccountStatus, STATUS_CONFIG } from "@/lib/accountStatus";
 import { formatDistanceToNow } from "date-fns";
 
@@ -31,6 +31,8 @@ export default function PropertiesPage() {
   const [filter, setFilter] = useState<AccountStatus | "all">("all");
   const [syncing, setSyncing] = useState(false);
   const [editingTarget, setEditingTarget] = useState<{ id: string; value: number } | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/properties");
@@ -55,6 +57,15 @@ export default function PropertiesPage() {
     } finally {
       setSyncing(false);
     }
+  }
+
+  async function handleRemove() {
+    if (!removeTarget) return;
+    setRemoving(true);
+    await fetch(`/api/properties/${removeTarget.id}`, { method: "DELETE" });
+    setProperties((prev) => prev.filter((p) => p.id !== removeTarget.id));
+    setRemoveTarget(null);
+    setRemoving(false);
   }
 
   async function saveTarget(id: string, value: number) {
@@ -176,7 +187,7 @@ export default function PropertiesPage() {
                 }`} />
 
                 <div className="pl-4 pr-4 pt-4 pb-3">
-                  {/* Top row: name + status badge */}
+                  {/* Top row: name + status badge + remove button */}
                   <div className="flex items-start justify-between gap-2 mb-0.5">
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 text-sm leading-tight truncate">{p.pageName}</p>
@@ -184,9 +195,18 @@ export default function PropertiesPage() {
                         <p className="text-xs text-gray-400 mt-0.5">@{p.username}</p>
                       )}
                     </div>
-                    <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
-                      {cfg.label}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                        {cfg.label}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRemoveTarget({ id: p.id, name: p.pageName }); }}
+                        className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Remove property"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Today status */}
@@ -267,6 +287,42 @@ export default function PropertiesPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Remove confirmation modal */}
+      {removeTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 size={18} className="text-red-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Remove property?</p>
+                <p className="text-sm text-gray-500 mt-0.5 truncate">{removeTarget.name}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              This will remove the property and all its posts, analytics, and sync history from Softmarche. The Facebook Page and Instagram account itself are not affected.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRemoveTarget(null)}
+                disabled={removing}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemove}
+                disabled={removing}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {removing ? "Removing…" : "Yes, remove"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
