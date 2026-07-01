@@ -86,8 +86,8 @@ export async function GET(req: Request) {
   if (!accountId) return NextResponse.json({ error: "accountId required" }, { status: 400 });
 
   const now = new Date();
-  const curYear = now.getFullYear();
-  const curMonth = now.getMonth() + 1;
+  const curYear  = parseInt(searchParams.get("year")  ?? String(now.getFullYear()));
+  const curMonth = parseInt(searchParams.get("month") ?? String(now.getMonth() + 1));
   const { year: prevYear, month: prevMonthNum } = prevMonth(curYear, curMonth);
 
   const cur  = periodRange(curYear, curMonth);

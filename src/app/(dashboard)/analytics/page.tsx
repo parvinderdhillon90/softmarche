@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, TrendingUp, TrendingDown, Minus, Users, Image, Film, LayoutGrid, Video, BookOpen } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, Minus, Users, Image, Film, LayoutGrid, Video, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Account } from "@/types";
 import { format } from "date-fns";
@@ -70,6 +70,22 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+
+  const realYear = new Date().getFullYear();
+  const realMonth = new Date().getMonth() + 1;
+  const isAtCurrentMonth = selectedYear === realYear && selectedMonth === realMonth;
+
+  function goToPrevMonth() {
+    if (selectedMonth === 1) { setSelectedYear(y => y - 1); setSelectedMonth(12); }
+    else setSelectedMonth(m => m - 1);
+  }
+  function goToNextMonth() {
+    if (isAtCurrentMonth) return;
+    if (selectedMonth === 12) { setSelectedYear(y => y + 1); setSelectedMonth(1); }
+    else setSelectedMonth(m => m + 1);
+  }
 
   useEffect(() => {
     fetch("/api/accounts").then((r) => r.json()).then((list: Account[]) => {
@@ -82,10 +98,10 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (!accountId) return;
     setLoading(true);
-    fetch(`/api/analytics/report?accountId=${accountId}`)
+    fetch(`/api/analytics/report?accountId=${accountId}&year=${selectedYear}&month=${selectedMonth}`)
       .then((r) => r.json())
       .then((d) => { setReport(d); setLoading(false); });
-  }, [accountId]);
+  }, [accountId, selectedYear, selectedMonth]);
 
   async function handleRefresh() {
     if (!accountId) return;
@@ -95,7 +111,7 @@ export default function AnalyticsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accountId }),
     });
-    const res = await fetch(`/api/analytics/report?accountId=${accountId}`);
+    const res = await fetch(`/api/analytics/report?accountId=${accountId}&year=${selectedYear}&month=${selectedMonth}`);
     setReport(await res.json());
     setRefreshing(false);
   }
@@ -108,7 +124,7 @@ export default function AnalyticsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accountId }),
     });
-    const res = await fetch(`/api/analytics/report?accountId=${accountId}`);
+    const res = await fetch(`/api/analytics/report?accountId=${accountId}&year=${selectedYear}&month=${selectedMonth}`);
     setReport(await res.json());
     setImporting(false);
   }
@@ -130,7 +146,19 @@ export default function AnalyticsPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Month navigator */}
+          <div className="flex items-center gap-1 border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+            <button onClick={goToPrevMonth} className="p-0.5 rounded hover:bg-gray-100 text-gray-600">
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm font-semibold text-gray-700 min-w-[110px] text-center select-none">
+              {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+            </span>
+            <button onClick={goToNextMonth} disabled={isAtCurrentMonth} className="p-0.5 rounded hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+              <ChevronRight size={16} />
+            </button>
+          </div>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
@@ -156,7 +184,7 @@ export default function AnalyticsPage() {
             {importing ? "Importing…" : "Import History"}
           </button>
           <a
-            href={accountId ? `/api/analytics/pdf?accountId=${accountId}` : "#"}
+            href={accountId ? `/api/analytics/pdf?accountId=${accountId}&year=${selectedYear}&month=${selectedMonth}` : "#"}
             target="_blank"
             rel="noopener noreferrer"
             className={`flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 ${!accountId ? "pointer-events-none opacity-50" : ""}`}
