@@ -33,6 +33,8 @@ export default function PropertiesPage() {
   const [editingTarget, setEditingTarget] = useState<{ id: string; value: number } | null>(null);
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [members, setMembers] = useState<{ id: string; name: string; accountIds: string[] }[]>([]);
+  const [selectedMember, setSelectedMember] = useState("");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/properties");
@@ -48,6 +50,10 @@ export default function PropertiesPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch("/api/team").then(r => r.json()).then(setMembers);
+  }, []);
 
   async function handleSyncAll() {
     setSyncing(true);
@@ -80,12 +86,15 @@ export default function PropertiesPage() {
     setEditingTarget(null);
   }
 
+  const activeMember = members.find(m => m.id === selectedMember);
+
   const filtered = properties.filter((p) => {
     const matchSearch =
       p.pageName.toLowerCase().includes(search.toLowerCase()) ||
       (p.username ?? "").toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || p.status === filter;
-    return matchSearch && matchFilter;
+    const matchMember = !activeMember || activeMember.accountIds.includes(p.id);
+    return matchSearch && matchFilter && matchMember;
   });
 
   const counts = {
@@ -101,7 +110,9 @@ export default function PropertiesPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">All Properties</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{properties.length} hotel accounts</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {activeMember ? `${filtered.length} properties — ${activeMember.name}` : `${properties.length} hotel accounts`}
+          </p>
         </div>
         <button
           onClick={handleSyncAll}
@@ -137,6 +148,20 @@ export default function PropertiesPage() {
             </button>
           );
         })}
+
+        {/* Member filter */}
+        {members.length > 0 && (
+          <select
+            value={selectedMember}
+            onChange={(e) => setSelectedMember(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All members</option>
+            {members.map(m => (
+              <option key={m.id} value={m.id}>{m.name} ({m.accountIds.length})</option>
+            ))}
+          </select>
+        )}
 
         {/* Search */}
         <div className="ml-auto flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-1.5">

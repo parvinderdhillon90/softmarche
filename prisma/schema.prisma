@@ -29,6 +29,7 @@ model Account {
   syncLogs          AccountSyncLog[]
   posts             Post[]
   followerSnapshots FollowerSnapshot[]
+  assignments       AccountAssignment[]
 
   @@unique([platform, pageId])
 }
@@ -95,6 +96,31 @@ model User {
   IsActive     Boolean   @default(true)
   LastLogin    DateTime?
   CreatedOn    DateTime  @default(now())
+}
+
+model TeamMember {
+  id          String              @id @default(cuid())
+  name        String
+  email       String              @unique
+  role        TeamRole            @default(MEMBER)
+  createdAt   DateTime            @default(now())
+  assignments AccountAssignment[]
+}
+
+model AccountAssignment {
+  id           String     @id @default(cuid())
+  teamMemberId String
+  accountId    String
+  assignedAt   DateTime   @default(now())
+  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  account      Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([teamMemberId, accountId])
+}
+
+enum TeamRole {
+  ADMIN
+  MEMBER
 }
 
 enum Platform {
