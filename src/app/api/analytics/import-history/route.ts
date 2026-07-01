@@ -10,7 +10,8 @@ function mapMediaType(igType: string): "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" {
 }
 
 export async function POST(req: Request) {
-  const { accountId } = await req.json();
+  const body = await req.json();
+  const { accountId, year: targetYear, month: targetMonth } = body;
   if (!accountId) return NextResponse.json({ error: "accountId required" }, { status: 400 });
 
   const account = await prisma.account.findUnique({
@@ -22,12 +23,16 @@ export async function POST(req: Request) {
   const now = new Date();
   let imported = 0;
 
-  // Import last 2 months of history
-  for (let offset = 1; offset <= 2; offset++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
+  // If a specific month is requested, import just that month; otherwise import last 2 months
+  const monthsToImport: Array<{ year: number; month: number }> =
+    targetYear && targetMonth
+      ? [{ year: targetYear, month: targetMonth }]
+      : [1, 2].map((offset) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+          return { year: d.getFullYear(), month: d.getMonth() + 1 };
+        });
 
+  for (const { year, month } of monthsToImport) {
     try {
       const media = await getInstagramMediaForMonth(account.instagramId, account.accessToken, year, month);
       for (const item of media) {

@@ -119,7 +119,14 @@ export default function AnalyticsPage() {
   async function handleImportHistory() {
     if (!accountId) return;
     setImporting(true);
+    // Import the currently viewed month specifically
     await fetch("/api/analytics/import-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId, year: selectedYear, month: selectedMonth }),
+    });
+    // Also refresh analytics so metrics show immediately (not just post count)
+    await fetch("/api/analytics/report", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accountId }),
@@ -357,8 +364,11 @@ export default function AnalyticsPage() {
           {/* Empty state */}
           {report.topPosts.length === 0 && cur!.breakdown.total === 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-              <p className="text-sm font-medium text-amber-800">No data yet for this property</p>
-              <p className="text-sm text-amber-600 mt-1">Click <strong>Refresh</strong> to pull metrics from Instagram.</p>
+              <p className="text-sm font-medium text-amber-800">No posts found for {MONTH_NAMES[selectedMonth - 1]} {selectedYear}</p>
+              {isAtCurrentMonth
+                ? <p className="text-sm text-amber-600 mt-1">Click <strong>Refresh</strong> to pull metrics from Instagram.</p>
+                : <p className="text-sm text-amber-600 mt-1">Click <strong>Import History</strong> to load posts for this month, then click <strong>Refresh</strong> to pull their metrics.</p>
+              }
             </div>
           )}
 
